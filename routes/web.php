@@ -23,6 +23,12 @@ Route::middleware(['auth'])->prefix('spd')->name('spd.')->group(function () {
     Route::get('/', SpdIndex::class)->name('index');
     Route::get('/create', SpdCreate::class)->name('create');
     Route::get('/{spd}', SpdShow::class)->name('show');
+    
+    // PDF Routes
+    Route::get('/{spd}/pdf/spt', [App\Http\Controllers\SpdPdfController::class, 'downloadSpt'])->name('pdf.spt');
+    Route::get('/{spd}/pdf/spd', [App\Http\Controllers\SpdPdfController::class, 'downloadSpd'])->name('pdf.spd');
+    Route::get('/{spd}/preview/spt', [App\Http\Controllers\SpdPdfController::class, 'viewSpt'])->name('preview.spt');
+    Route::get('/{spd}/preview/spd', [App\Http\Controllers\SpdPdfController::class, 'viewSpd'])->name('preview.spd');
 });
 
 // Approval Routes

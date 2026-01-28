@@ -1,11 +1,33 @@
 <div>
     <!-- Back Button -->
-    <a href="{{ route('spd.index') }}" class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 mb-6">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Kembali ke Daftar SPD
-    </a>
+    <div class="flex items-center justify-between mb-6">
+        <a href="{{ route('spd.index') }}" class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Kembali ke Daftar SPD
+        </a>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-2">
+            <a href="{{ route('spd.pdf.spt', $spd) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download SPT
+            </a>
+            <a href="{{ route('spd.pdf.spd', $spd) }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download SPD
+            </a>
+        </div>
+    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Info -->

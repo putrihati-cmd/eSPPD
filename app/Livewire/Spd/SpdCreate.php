@@ -99,6 +99,33 @@ class SpdCreate extends Component
         $user = auth()->user();
         $duration = $this->calculateDuration();
         $year = date('Y');
+        $estimatedCost = $this->calculateEstimatedCost();
+        
+        // Validate budget availability
+        $budget = Budget::find($this->budget_id);
+        if ($budget->available_budget < $estimatedCost) {
+            session()->flash('error', 'Budget tidak mencukupi. Tersedia: Rp ' . number_format($budget->available_budget, 0, ',', '.') . ', Dibutuhkan: Rp ' . number_format($estimatedCost, 0, ',', '.'));
+            return;
+        }
+        
+        // Check for double booking (overlapping dates for same employee)
+        $hasOverlap = Spd::where('employee_id', $this->employee_id)
+            ->where('status', '!=', 'rejected')
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($query) {
+                $query->whereBetween('departure_date', [$this->departure_date, $this->return_date])
+                    ->orWhereBetween('return_date', [$this->departure_date, $this->return_date])
+                    ->orWhere(function ($q) {
+                        $q->where('departure_date', '<=', $this->departure_date)
+                          ->where('return_date', '>=', $this->return_date);
+                    });
+            })
+            ->exists();
+            
+        if ($hasOverlap) {
+            session()->flash('error', 'Pegawai sudah memiliki SPD pada rentang tanggal tersebut.');
+            return;
+        }
         
         // Generate SPT and SPD numbers
         $lastSpd = Spd::whereYear('created_at', $year)->latest()->first();
@@ -120,7 +147,7 @@ class SpdCreate extends Component
             'return_date' => $this->return_date,
             'duration' => $duration,
             'budget_id' => $this->budget_id,
-            'estimated_cost' => $this->calculateEstimatedCost(),
+            'estimated_cost' => $estimatedCost,
             'transport_type' => $this->transport_type,
             'needs_accommodation' => $this->needs_accommodation,
             'status' => 'draft',
@@ -148,6 +175,8 @@ class SpdCreate extends Component
             'description' => 'Transportasi PP',
             'estimated_amount' => 1500000,
         ]);
+        
+        session()->flash('message', 'SPD berhasil dibuat!');
 
         return $this->redirect(route('spd.show', $spd), navigate: true);
     }
