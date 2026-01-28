@@ -86,6 +86,55 @@
         </div>
     </div>
 
+    <!-- Alerts -->
+    @if ($alerts->count() > 0)
+        <div class="mb-6 space-y-3">
+            @foreach ($alerts as $alert)
+                <div
+                    class="flex items-center gap-3 p-4 rounded-xl border
+                @if ($alert['type'] === 'danger') bg-red-50 border-red-200 text-red-800
+                @elseif($alert['type'] === 'warning') bg-orange-50 border-orange-200 text-orange-800
+                @else bg-blue-50 border-blue-200 text-blue-800 @endif">
+                    @if ($alert['type'] === 'danger')
+                        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    @elseif($alert['type'] === 'warning')
+                        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    @else
+                        <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    @endif
+                    <span class="font-medium">{{ $alert['message'] }}</span>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Monthly Trend Chart -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">Trend SPD 6 Bulan Terakhir</h3>
+            <canvas id="monthlyTrendChart" height="200"></canvas>
+        </div>
+
+        <!-- Status Distribution Chart -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4">Distribusi Status SPD</h3>
+            <canvas id="statusChart" height="200"></canvas>
+        </div>
+    </div>
+
     <!-- Recent SPD and Budget -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Recent SPD -->
@@ -183,3 +232,77 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monthly Trend Chart
+            const monthlyCtx = document.getElementById('monthlyTrendChart');
+            if (monthlyCtx) {
+                new Chart(monthlyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: {!! json_encode($monthlyTrend->pluck('month')) !!},
+                        datasets: [{
+                            label: 'Jumlah SPD',
+                            data: {!! json_encode($monthlyTrend->pluck('count')) !!},
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Status Distribution Chart
+            const statusCtx = document.getElementById('statusChart');
+            if (statusCtx) {
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: {!! json_encode(collect($statusDistribution)->pluck('status')) !!},
+                        datasets: [{
+                            data: {!! json_encode(collect($statusDistribution)->pluck('count')) !!},
+                            backgroundColor: [
+                                'rgba(100, 116, 139, 0.8)', // Draft - slate
+                                'rgba(249, 115, 22, 0.8)', // Pending - orange
+                                'rgba(16, 185, 129, 0.8)', // Approved - emerald
+                                'rgba(59, 130, 246, 0.8)', // Completed - blue
+                                'rgba(239, 68, 68, 0.8)', // Rejected - red
+                            ],
+                            borderWidth: 0,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+@endpush

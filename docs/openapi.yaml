@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: e-SPPD API
+  description: |
+    API untuk Sistem Elektronik Surat Perintah Perjalanan Dinas (e-SPPD).
+
+    ## Authentication
+    API menggunakan Laravel Sanctum untuk autentikasi. Dapatkan token dengan endpoint `/auth/login`.
+
+    ## Rate Limiting
+    API dibatasi 60 request per menit per user.
+  version: 1.0.0
+  contact:
+    email: admin@esppd.example.com
+
+servers:
+  - url: http://127.0.0.1:8000/api
+    description: Development Server
+  - url: https://esppd.example.com/api
+    description: Production Server
+
+tags:
+  - name: Authentication
+    description: Login, logout, dan user info
+  - name: SPPD
+    description: CRUD dan workflow SPPD
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, device_name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                device_name:
+                  type: string
+      responses:
+        "200":
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "422":
+          description: Kredensial tidak valid
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Logout berhasil
+
+  /auth/user:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User info
+
+  /sppd:
+    get:
+      tags: [SPPD]
+      summary: List SPPD
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, approved, rejected, completed]
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: List SPPD
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SppdListResponse"
+
+    post:
+      tags: [SPPD]
+      summary: Create SPPD
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SppdCreateRequest"
+      responses:
+        "201":
+          description: SPPD created
+        "422":
+          description: Validation error
+
+  /sppd/{id}:
+    get:
+      tags: [SPPD]
+      summary: Get SPPD detail
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SPPD detail
+
+    put:
+      tags: [SPPD]
+      summary: Update SPPD (draft only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SppdUpdateRequest"
+      responses:
+        "200":
+          description: SPPD updated
+        "403":
+          description: Cannot update non-draft SPPD
+
+    delete:
+      tags: [SPPD]
+      summary: Delete SPPD (draft only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SPPD deleted
+        "403":
+          description: Cannot delete non-draft SPPD
+
+  /sppd/{id}/submit:
+    post:
+      tags: [SPPD]
+      summary: Submit SPPD for approval
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SPPD submitted
+
+  /sppd/{id}/approve:
+    post:
+      tags: [SPPD]
+      summary: Approve SPPD
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        "200":
+          description: SPPD approved
+
+  /sppd/{id}/reject:
+    post:
+      tags: [SPPD]
+      summary: Reject SPPD
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alasan_penolakan]
+              properties:
+                alasan_penolakan:
+                  type: string
+                  minLength: 10
+      responses:
+        "200":
+          description: SPPD rejected
+
+  /sppd/{id}/complete:
+    post:
+      tags: [SPPD]
+      summary: Mark SPPD as completed
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: SPPD completed
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+            token:
+              type: string
+
+    SppdListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Sppd"
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            total:
+              type: integer
+
+    Sppd:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        spt_number:
+          type: string
+        spd_number:
+          type: string
+        destination:
+          type: string
+        purpose:
+          type: string
+        departure_date:
+          type: string
+          format: date
+        return_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [draft, submitted, approved, rejected, completed]
+
+    SppdCreateRequest:
+      type: object
+      required:
+        - employee_id
+        - destination
+        - purpose
+        - departure_date
+        - return_date
+        - transport_type
+        - budget_id
+      properties:
+        employee_id:
+          type: string
+          format: uuid
+        destination:
+          type: string
+        purpose:
+          type: string
+        departure_date:
+          type: string
+          format: date
+        return_date:
+          type: string
+          format: date
+        transport_type:
+          type: string
+          enum: [pesawat, kereta, bus, mobil_dinas, kapal]
+        budget_id:
+          type: string
+          format: uuid
+        invitation_number:
+          type: string
+
+    SppdUpdateRequest:
+      type: object
+      properties:
+        destination:
+          type: string
+        purpose:
+          type: string
+        departure_date:
+          type: string
+          format: date
+        return_date:
+          type: string
+          format: date
+        transport_type:
+          type: string

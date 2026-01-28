@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Offline - e-SPPD</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+            }
+            .container {
+                text-align: center;
+                padding: 2rem;
+                max-width: 400px;
+            }
+            .icon {
+                width: 120px;
+                height: 120px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 2rem;
+            }
+            .icon svg {
+                width: 60px;
+                height: 60px;
+                stroke: #94a3b8;
+            }
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                color: #f1f5f9;
+            }
+            p {
+                color: #94a3b8;
+                line-height: 1.6;
+                margin-bottom: 2rem;
+            }
+            .btn {
+                display: inline-block;
+                padding: 0.75rem 2rem;
+                background: #3b82f6;
+                color: white;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-weight: 500;
+                transition: background 0.3s;
+            }
+            .btn:hover {
+                background: #2563eb;
+            }
+            .status {
+                margin-top: 2rem;
+                padding: 1rem;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 0.5rem;
+                font-size: 0.875rem;
+                color: #64748b;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 8.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414"
+                    />
+                </svg>
+            </div>
+            <h1>Anda Sedang Offline</h1>
+            <p>
+                Tidak dapat terhubung ke server. Pastikan koneksi internet Anda
+                aktif dan coba lagi.
+            </p>
+            <a
+                href="/"
+                class="btn"
+                onclick="
+                    location.reload();
+                    return false;
+                "
+                >Coba Lagi</a
+            >
+            <div class="status" id="status">Memeriksa koneksi...</div>
+        </div>
+        <script>
+            function checkOnline() {
+                const status = document.getElementById("status");
+                if (navigator.onLine) {
+                    status.textContent = "Koneksi terdeteksi! Memuat ulang...";
+                    status.style.color = "#22c55e";
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    status.textContent =
+                        "Masih offline. Data yang tersimpan di cache masih dapat diakses.";
+                }
+            }
+
+            window.addEventListener("online", checkOnline);
+            checkOnline();
+        </script>
+    </body>
+</html>

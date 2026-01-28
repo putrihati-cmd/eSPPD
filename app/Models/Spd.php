@@ -37,6 +37,11 @@ class Spd extends Model
         'completed_at',
     ];
 
+    public function followers(): HasMany
+    {
+        return $this->hasMany(SpdFollower::class);
+    }
+
     protected $casts = [
         'departure_date' => 'date',
         'return_date' => 'date',

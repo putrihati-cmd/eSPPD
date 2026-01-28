@@ -1,0 +1,276 @@
+{
+    "info": {
+        "_postman_id": "esppd-api-collection",
+        "name": "eSPPD API",
+        "description": "API Collection untuk Sistem e-SPPD (Surat Perintah Perjalanan Dinas)",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{access_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000/api"
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.token) {",
+                                    "    pm.collectionVariables.set('access_token', jsonData.data.token);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"mawikhusni@uinsaizu.ac.id\",\n    \"password\": \"password\",\n    \"device_name\": \"postman\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "login"]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/logout",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "logout"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Current User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/user",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "user"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "SPPD",
+            "item": [
+                {
+                    "name": "List SPPD",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/sppd?status=draft&per_page=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd"],
+                            "query": [
+                                { "key": "status", "value": "draft" },
+                                { "key": "per_page", "value": "10" },
+                                {
+                                    "key": "from_date",
+                                    "value": "",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "to_date",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create SPPD",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"employee_id\": \"{{employee_id}}\",\n    \"destination\": \"Jakarta\",\n    \"purpose\": \"Rapat Koordinasi Program\",\n    \"departure_date\": \"2024-02-15\",\n    \"return_date\": \"2024-02-17\",\n    \"transport_type\": \"pesawat\",\n    \"budget_id\": \"{{budget_id}}\",\n    \"invitation_number\": \"UND-001/2024\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/sppd",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get SPPD Detail",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update SPPD",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"destination\": \"Surabaya\",\n    \"purpose\": \"Updated purpose\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete SPPD",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Submit SPPD",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}/submit",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}", "submit"]
+                        }
+                    }
+                },
+                {
+                    "name": "Approve SPPD",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"notes\": \"Disetujui\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}/approve",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}", "approve"]
+                        }
+                    }
+                },
+                {
+                    "name": "Reject SPPD",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"alasan_penolakan\": \"Anggaran tidak mencukupi\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}/reject",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}", "reject"]
+                        }
+                    }
+                },
+                {
+                    "name": "Complete SPPD",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/sppd/{{spd_id}}/complete",
+                            "host": ["{{base_url}}"],
+                            "path": ["sppd", "{{spd_id}}", "complete"]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

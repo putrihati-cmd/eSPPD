@@ -1,59 +1,155 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Kisah Perjalanan Pengembangan Sistem e-SPPD dan Daftar Tugas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Dokumen ini menceritakan perjalanan pengembangan sistem **e-SPPD (Elektronik Surat Perintah Perjalanan Dinas)** dari awal hingga selesai, serta menyajikan daftar tugas komprehensif (To-Do List) yang telah diselesaikan.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📖 Bab 1: Awal Mula (Fondasi)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Cerita dimulai dengan kebutuhan untuk mendigitalkan proses perjalanan dinas yang selama ini manual dan lambat. Langkah pertama adalah membangun fondasi yang kuat menggunakan Laravel sebagai kerangka kerja utama.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Pada fase ini, kami:
 
-## Learning Laravel
+1.  **Menyiapkan Lingkungan:** Menginstal Laravel, mengonfigurasi database MySQL, dan menyiapkan struktur folder proyek.
+2.  **Desain Database:** Merancang skema database yang efisien untuk `users`, `employees`, `spds` (surat perjalanan), `units`, dan `budgets`.
+3.  **Authentication:** Mengimplementasikan sistem login yang aman, membedakan peran antara Pegawai, Atasan (Approver), dan Admin.
+4.  **Master Data:** Membuat fitur pengelolaan data master seperti Pegawai, Satuan Kerja, dan Anggaran.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Bab 2: Inti Sistem (Workflow SPPD)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Setelah fondasi berdiri, kami mulai membangun jantung dari sistem ini: Kerangka Kerja SPPD. Tujuannya adalah membuat pengajuan perjalanan semudah mungkin namun tetap terkontrol.
 
-## Laravel Sponsors
+Kami membangun:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1.  **Formulir Cerdas:** Form pengajuan SPPD yang otomatis mengisi data pegawai dan menghitung anggaran.
+2.  **Sistem Persetujuan Berjenjang (Approval):** Fitur paling krusial. SPPD tidak langsung disetujui, tapi harus melewati atasan berjenjang. Kami menambahkan fitur _Delegasi_ (jika atasan cuti) dan _Auto-Escalation_ (jika atasan lupa menyetujui).
+3.  **Tracking Status:** Pegawai bisa memantau status pengajuannya secara real-time: `Draft` -> `Submitted` -> `Approved` -> `Completed`.
 
-### Premium Partners
+## 📊 Bab 3: Pengolahan Data Besar (Excel & PDF)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Instansi seringkali perlu memproses banyak data sekaligus. Menginput satu-persatu bukanlah opsi untuk ratusan perjalanan.
 
-## Contributing
+Solusi kami:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1.  **Bulk Import:** Menggunakan Laravel Excel dan Queue, admin bisa mengupload file Excel berisi ratusan data SPPD, dan sistem memprosesnya di latar belakang tanpa membuat browser 'hang'.
+2.  **Export Laporan:** Mengizinkan user mengunduh data dalam bentuk Excel untuk keperluan audit, serta mencetak SPPD dan Surat Perintah Tugas (SPT) dalam format PDF resmi yang siap tanda tangan.
 
-## Code of Conduct
+## 📈 Bab 4: Wawasan & Pelaporan (Dashboard & Reporting)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Data tanpa wawasan hanyalah angka. Kami mengubah data SPPD menjadi informasi berharga.
 
-## Security Vulnerabilities
+Fitur yang dibangun:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1.  **Dashboard Interaktif:** Grafik tren biaya bulanan, status persetujuan, dan sisa anggaran unit kerja.
+2.  **Report Builder:** Sebuah tool canggih di mana user bisa membuat laporan kustom (memilih kolom sendiri, filter tanggal, grup data) layaknya menggunakan pivot table sederhana.
+3.  **Laporan Terjadwal:** Sistem otomatis mengirim rekap SPPD via email setiap Senin pagi ke para pimpinan.
 
-## License
+## 🔗 Bab 5: Menghubungkan Segalanya (Integrasi & Mobile)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Di era modern, sistem tidak berdiri sendiri. e-SPPD harus bisa berbicara dengan dunia luar dan bisa diakses dari mana saja.
+
+Kami menambahkan:
+
+1.  **Mobile API:** Endpoint khusus untuk aplikasi mobile Android/iOS, lengkap dengan autentikasi token (Sanctum).
+2.  **Integrasi Google Calendar:** Jadwal perjalanan otomatis masuk ke kalender pegawai.
+3.  **Notifikasi Real-time:** Notifikasi via Email, Database, bahkan SMS untuk hal yang urgent dan Push Notification (Firebase).
+4.  **Single Sign-On (SSO):** Integrasi LDAP/Active Directory agar pegawai bisa login menggunakan akun kantor mereka.
+5.  **Webhooks:** Kemampuan sistem untuk memberi tahu aplikasi lain (misalnya sistem HR) saat ada SPPD baru disetujui.
+
+## 🛡️ Bab 6: Benteng Pertahanan (Testing & Deployment)
+
+Sebuah sistem belum selesai tanpa jaminan kualitas. Bab terakhir adalah memastikan semuanya berjalan lancar dan aman.
+
+Langkah terakhir:
+
+1.  **Browser Testing (Laravel Dusk):** Robot otomatis yang mensimulasikan user mengklik tombol, mengisi form, dan memastikan alur berjalan benar.
+2.  **Performance Testing:** Menguji sistem dengan ribuan data untuk memastikan import Excel dan load dashboard tetap cepat.
+3.  **PWA (Progressive Web App):** Membuat website bisa diinstal di HP dan bahkan bisa dibuka saat offline (untuk melihat data yang sudah di-cache).
+4.  **Deployment Scripts:** Skrip otomatis untuk deploy ke server produksi dengan aman.
+
+---
+
+# ✅ Comprehensive To-Do List
+
+Berikut adalah daftar lengkap fitur yang telah diimplementasikan dalam proyek e-SPPD:
+
+### 1. Setup & Konfigurasi Awal
+
+- [x] Instalasi Laravel 11 & Konfigurasi Environment (`.env`)
+- [x] Setup Database MySQL (Tables: Users, Employees, Units, Budgets)
+- [x] Setup TailwindCSS & Vite
+- [x] Konfigurasi Authentication (Login, Logout, Role Management)
+
+### 2. Manajemen Master Data (CRUD)
+
+- [x] CRUD Pegawai (`Employees`) dengan relasi User
+- [x] CRUD Satuan Kerja (`Units`)
+- [x] CRUD Anggaran (`Budgets`) dengan tracking saldo
+
+### 3. Modul SPPD (Inti)
+
+- [x] Form Pengajuan SPPD (Create/Edit)
+- [x] Validasi Input & Logika Bisnis
+- [x] Detail View SPPD
+- [x] Status Workflow Engine (`draft`, `submitted`, `approved`, `rejected`, `completed`)
+- [x] Generate Nomor SPPD Otomatis
+
+### 4. Sistem Approval (Persetujuan)
+
+- [x] Approval Workflow Berjenjang (Multi-level)
+- [x] Fitur Reject dengan Catatan/Alasan
+- [x] **Delegasi Wewenang** (Atasan bisa mendelegasikan approval)
+- [x] **Bulk Approval** (Setujui banyak sekaligus)
+- [x] **Auto-Escalation** (Eskalasi otomatis jika overdue)
+- [x] Reminder Email Otomatis untuk pending approval
+
+### 5. Laporan Perjalanan (Trip Reports)
+
+- [x] Form Input Laporan Perjalanan Pasca-Dinas
+- [x] Upload Bukti Foto/Dokumen
+- [x] **Versioning Laporan** (Menyimpan riwayat perubahan laporan)
+- [x] Generate Laporan ke DOCX (Word) dari Template
+
+### 6. Import & Export (Excel/PDF)
+
+- [x] Export Data SPPD ke Excel dengan Filter
+- [x] Download Template Import Excel
+- [x] **Bulk Import SPPD** dengan Validasi
+- [x] **Queue Processing** untuk Import file besar (Background Job)
+- [x] Progress Bar Real-time saat Import
+- [x] Export PDF untuk SPT (Surat Perintah Tugas)
+- [x] Export PDF untuk Lembar SPPD
+
+### 7. Dashboard & Reporting
+
+- [x] Dashboard Statistik (Total SPPD, Biaya, Status)
+- [x] Grafik Tren Bulanan & Penggunaan Anggaran
+- [x] **Custom Report Builder** (User bisa bikin format laporan sendiri)
+- [x] **Scheduled Reports** (Kirim laporan otomatis via Email harian/mingguan)
+
+### 8. Integrasi & Fitur Lanjutan
+
+- [x] **Mobile API** (Endpoints ringkas untuk aplikasi HP)
+- [x] **Webhooks System** (Kirim event ke url eksternal)
+- [x] **Google Calendar Sync** (Sinkronisasi jadwal ke Google Calendar)
+- [x] **Sms Gateway Service** (Untuk notifikasi urgent)
+- [x] **LDAP/Active Directory Auth** (Fitur SSO)
+- [x] **Firebase Push Notifications**
+
+### 9. Keamanan & Performa
+
+- [x] **PWA Support** (Manifest.json, Service Worker, Offline Page)
+- [x] Laravel Dusk Browser Tests (Automated UI Testing)
+- [x] Load Testing & Query Optimization Checks
+- [x] Middleware Role & Permission Checks
+
+### 10. Utilitas & Deployment
+
+- [x] Template Manager (Admin bisa upload template Word sendiri)
+- [x] Deployment Scripts (`deploy.sh`, `backup.sh`, `monitor.sh`)
+- [x] Cron Jobs Configuration (Scheduler)
+
+---
+
+**Status Proyek: Selesai (100% Completed)**
+Seluruh spesifikasi dalam folder `Prompt` telah diterjemahkan menjadi kode fungsional.

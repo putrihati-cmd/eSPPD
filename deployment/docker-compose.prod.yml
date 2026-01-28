@@ -1,0 +1,80 @@
+services:
+  # Laravel App (via Octane/Swoole or PHP-FPM)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: esppd-app:latest
+    container_name: esppd-app
+    restart: always
+    environment:
+      APP_ENV: production
+      APP_DEBUG: false
+    volumes:
+      - .:/var/www/html
+    networks:
+      - esppd-network
+    depends_on:
+      - db
+      - redis
+      - document-service
+
+  # Python Microservice
+  document-service:
+    build:
+      context: ./document-service
+      dockerfile: Dockerfile
+    image: esppd-document-service:latest
+    container_name: esppd-python-service
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./document-service/templates:/app/templates:ro
+      - ./document-service/generated:/app/generated
+    environment:
+      - TEMPLATES_DIR=/app/templates
+      - GENERATED_DIR=/app/generated
+    networks:
+      - esppd-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database
+  db:
+    image: postgres:15-alpine
+    container_name: esppd-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - esppd-network
+
+  # Queue/Cache
+  redis:
+    image: redis:alpine
+    container_name: esppd-redis
+    restart: always
+    volumes:
+      - redis-data:/data
+    networks:
+      - esppd-network
+
+  # Supervisor/Worker (Optional, if not part of main App image)
+  # worker: ...
+
+networks:
+  esppd-network:
+    driver: bridge
+
+volumes:
+  db-data:
+  redis-data:

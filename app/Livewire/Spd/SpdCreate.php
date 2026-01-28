@@ -14,6 +14,20 @@ class SpdCreate extends Component
     // Step 1: Employee selection
     public string $employee_id = '';
     public ?Employee $selectedEmployee = null;
+    
+    // Followers
+    public array $followers = []; // Array of employee IDs
+    public string $followerSearch = '';
+
+    // Auto-fill readonly fields from logged-in user
+    public bool $isOwnTrip = false;
+    public string $autoFillName = '';
+    public string $autoFillNip = '';
+    public string $autoFillJabatan = '';
+    public string $autoFillPangkat = '';
+    public string $autoFillUnitKerja = '';
+    public string $autoFillNoRekening = '';
+    public string $autoFillBank = '';
 
     // Step 2: Travel details
     public string $destination = '';
@@ -27,10 +41,40 @@ class SpdCreate extends Component
     // Step 3: Budget selection
     public string $budget_id = '';
 
+    /**
+     * Mount - Auto-fill form if the logged-in user has employee data
+     */
+    public function mount()
+    {
+        $user = auth()->user();
+        
+        // Check if user has associated employee record
+        if ($user && $user->employee) {
+            $employee = $user->employee;
+            
+            // Auto-fill the form with logged-in user's data
+            $this->employee_id = $employee->id;
+            $this->selectedEmployee = $employee;
+            $this->isOwnTrip = true;
+            
+            // Populate readonly display fields
+            $this->autoFillName = $employee->name ?? '';
+            $this->autoFillNip = $employee->nip ?? '';
+            $this->autoFillJabatan = $employee->position ?? '';
+            $this->autoFillPangkat = $employee->rank ?? '';
+            $this->autoFillUnitKerja = $employee->unit?->name ?? '';
+            $this->autoFillNoRekening = $employee->bank_account ?? '';
+            $this->autoFillBank = $employee->bank_name ?? '';
+        }
+    }
+
+
     public function rules()
     {
         return [
             'employee_id' => 'required',
+            'followers' => 'array',
+            'followers.*' => 'exists:employees,id',
             'destination' => 'required|string|max:255',
             'purpose' => 'required|string',
             'departure_date' => 'required|date|after:today',
@@ -38,6 +82,28 @@ class SpdCreate extends Component
             'transport_type' => 'required',
             'budget_id' => 'required',
         ];
+    }
+    
+    public function addFollower($employeeId)
+    {
+        if (!in_array($employeeId, $this->followers) && $employeeId !== $this->employee_id) {
+            $this->followers[] = $employeeId;
+        }
+        $this->followerSearch = '';
+    }
+
+    public function removeFollower($index)
+    {
+        unset($this->followers[$index]);
+        $this->followers = array_values($this->followers);
+    }
+    
+    public function getFollowersListProperty()
+    {
+        if (empty($this->followers)) {
+            return collect();
+        }
+        return Employee::whereIn('id', $this->followers)->get();
     }
 
     public function updatedEmployeeId($value)
@@ -176,6 +242,13 @@ class SpdCreate extends Component
             'estimated_amount' => 1500000,
         ]);
         
+        // Save Followers
+        foreach ($this->followers as $followerId) {
+            $spd->followers()->create([
+                'employee_id' => $followerId
+            ]);
+        }
+        
         session()->flash('message', 'SPD berhasil dibuat!');
 
         return $this->redirect(route('spd.show', $spd), navigate: true);
@@ -189,6 +262,17 @@ class SpdCreate extends Component
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
+            
+        $searchableEmployees = collect();
+        if (strlen($this->followerSearch) >= 2) {
+            $searchableEmployees = Employee::where('organization_id', $user->organization_id)
+                ->where('is_active', true)
+                ->where('name', 'like', '%' . $this->followerSearch . '%')
+                ->where('id', '!=', $this->employee_id)
+                ->whereNotIn('id', $this->followers)
+                ->limit(5)
+                ->get();
+        }
 
         $budgets = Budget::where('organization_id', $user->organization_id)
             ->where('year', now()->year)
@@ -197,6 +281,7 @@ class SpdCreate extends Component
 
         return view('livewire.spd.spd-create', [
             'employees' => $employees,
+            'searchableEmployees' => $searchableEmployees,
             'budgets' => $budgets,
         ])->layout('layouts.app', ['header' => 'Buat SPD Baru']);
     }

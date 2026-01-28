@@ -1,0 +1,223 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Approval;
+use App\Models\ApprovalDelegate;
+use App\Models\ApprovalRule;
+use App\Models\Spd;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
+
+
+class ApprovalService
+{
+    /**
+     * Process approval workflow for SPPD
+     */
+    public function process(Spd $spd, string $action, ?string $notes = null): bool
+    {
+        $currentApproval = $spd->getPendingApproval();
+
+        if (!$currentApproval) {
+            return false;
+        }
+
+        if ($action === 'approve') {
+            $this->approve($currentApproval, $notes);
+            $this->checkAndProceed($spd);
+        } elseif ($action === 'reject') {
+            $this->reject($currentApproval, $notes);
+            $spd->update(['status' => 'rejected']);
+        }
+
+        return true;
+    }
+
+    /**
+     * Approve an approval step
+     */
+    protected function approve(Approval $approval, ?string $notes = null): void
+    {
+        $approval->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Reject an approval step
+     */
+    protected function reject(Approval $approval, ?string $notes = null): void
+    {
+        $approval->update([
+            'status' => 'rejected',
+            'approved_at' => now(),
+            'notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Check if all approvals done and proceed
+     */
+    protected function checkAndProceed(Spd $spd): void
+    {
+        $pendingCount = $spd->approvals()->where('status', 'pending')->count();
+
+        if ($pendingCount === 0) {
+            // All approvals completed
+            $spd->update(['status' => 'approved']);
+        } else {
+            // Notify next approver
+            $nextApproval = $spd->getPendingApproval();
+            if ($nextApproval) {
+                $this->notify($nextApproval);
+            }
+        }
+    }
+
+    /**
+     * Notify approver (with delegation check)
+     */
+    public function notify(Approval $approval): void
+    {
+        $approver = $approval->approver;
+        
+        // Check if there's active delegation
+        $delegate = ApprovalDelegate::getDelegateFor($approver->id ?? null);
+        $targetApprover = $delegate ?? $approver;
+
+        if (!$targetApprover || !$targetApprover->user) {
+            return;
+        }
+
+        // Send email notification
+        $targetApprover->user->notify(
+            new \App\Notifications\SppdApprovalNotification($approval->spd, 'pending')
+        );
+        
+        // Log notification
+        \Log::info("Notification sent to: {$targetApprover->name} for SPD: {$approval->spd->spd_number}");
+    }
+
+
+    /**
+     * Escalate overdue approvals
+     */
+    public function escalate(): int
+    {
+        $deadlineHours = config('app.approval_deadline_hours', 48);
+        $escalatedCount = 0;
+
+        $overdueApprovals = Approval::where('status', 'pending')
+            ->where('created_at', '<', now()->subHours($deadlineHours))
+            ->with(['spd', 'approver'])
+            ->get();
+
+        foreach ($overdueApprovals as $approval) {
+            // Find higher level approver or admin
+            $nextApprover = $this->findEscalationTarget($approval);
+            
+            if ($nextApprover) {
+                $approval->update([
+                    'approver_id' => $nextApprover->id,
+                    'escalated_at' => now(),
+                ]);
+                $this->notify($approval);
+                $escalatedCount++;
+            }
+        }
+
+        return $escalatedCount;
+    }
+
+    /**
+     * Find escalation target for overdue approval
+     */
+    protected function findEscalationTarget(Approval $approval): ?\App\Models\Employee
+    {
+        // Try to find next level approver
+        $nextRule = ApprovalRule::active()
+            ->where('level', '>', $approval->level)
+            ->orderBy('level')
+            ->first();
+
+        return $nextRule?->approver;
+    }
+
+    /**
+     * Create approval chain for SPPD
+     */
+    public function createApprovalChain(Spd $spd): void
+    {
+        // Get applicable rules
+        $rules = ApprovalRule::active()
+            ->forUnit($spd->unit_id)
+            ->orderBy('level')
+            ->get();
+
+        if ($rules->isEmpty()) {
+            // Default: create single approval for supervisor
+            Approval::create([
+                'spd_id' => $spd->id,
+                'approver_id' => $spd->employee->supervisor_id ?? null,
+                'level' => 1,
+                'status' => 'pending',
+            ]);
+        } else {
+            foreach ($rules as $rule) {
+                // Check threshold
+                if ($rule->threshold_amount && $spd->estimated_cost < $rule->threshold_amount) {
+                    continue;
+                }
+
+                Approval::create([
+                    'spd_id' => $spd->id,
+                    'approver_id' => $rule->approver_id ?? $spd->employee->supervisor_id,
+                    'level' => $rule->level,
+                    'status' => 'pending',
+                ]);
+            }
+        }
+
+        // Notify first approver
+        $firstApproval = $spd->getPendingApproval();
+        if ($firstApproval) {
+            $this->notify($firstApproval);
+        }
+    }
+
+    /**
+     * Bulk approve multiple SPPDs
+     */
+    public function bulkApprove(array $spdIds, int $approverId, ?string $notes = null): array
+    {
+        $results = ['success' => 0, 'failed' => 0];
+
+        foreach ($spdIds as $spdId) {
+            $spd = Spd::find($spdId);
+            
+            if (!$spd) {
+                $results['failed']++;
+                continue;
+            }
+
+            $approval = $spd->approvals()
+                ->where('status', 'pending')
+                ->where('approver_id', $approverId)
+                ->first();
+
+            if ($approval) {
+                $this->process($spd, 'approve', $notes);
+                $results['success']++;
+            } else {
+                $results['failed']++;
+            }
+        }
+
+        return $results;
+    }
+}

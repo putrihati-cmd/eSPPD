@@ -12,7 +12,25 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                brand: {
+                    DEFAULT: '#02A0AC', // Primary
+                    50: '#F0FAFA',
+                    100: '#D1EFEF',
+                    500: '#02A0AC',
+                    600: '#4DA790', // Brand Dark / Shadow
+                    800: '#015F66',
+                },
+                accent: {
+                    DEFAULT: '#CBE155', // Accent
+                    hover: '#b8cc48',
+                },
+                teal: {
+                    light: '#A2DBDC', // Light Teal
+                },
+                paper: '#FDFEFE', // White/Background
             },
         },
     },
