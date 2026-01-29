@@ -108,6 +108,8 @@ class ApprovalWorkflowTest extends TestCase
             'user_id' => $approver1->id,
         ]);
         $approver1->update(['employee_id' => $approver1Employee->id]);
+        /** @var User $approver1 */
+        $approver1 = $approver1->fresh();
 
         $approver2 = User::factory()->create(['role' => 'approver']);
         $approver2Employee = Employee::factory()->create([
@@ -116,6 +118,8 @@ class ApprovalWorkflowTest extends TestCase
             'user_id' => $approver2->id,
         ]);
         $approver2->update(['employee_id' => $approver2Employee->id]);
+        /** @var User $approver2 */
+        $approver2 = $approver2->fresh();
 
         // First approval
         $this->actingAs($approver1)

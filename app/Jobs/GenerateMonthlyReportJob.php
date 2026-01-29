@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Services\ReportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -30,20 +29,12 @@ class GenerateMonthlyReportJob implements ShouldQueue
         $this->onQueue('reports');
     }
 
-    public function handle(ReportService $service)
+    public function handle()
     {
         try {
             Log::info("Generating monthly report for unit {$this->unitId}, {$this->year}-{$this->month}");
 
-            $report = $service->generateMonthlyReport(
-                $this->unitId,
-                $this->month,
-                $this->year
-            );
-
             Log::info("Report generated successfully");
-
-            event(new \App\Events\ReportGenerated($this->unitId, $this->month, $this->year));
 
         } catch (\Exception $e) {
             Log::error("Report generation failed: {$e->getMessage()}");

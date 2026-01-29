@@ -23,7 +23,7 @@ class DocumentTemplateService
             // Set document properties
             $properties = $phpWord->getDocInfo();
             $properties->setTitle('SPPD: ' . $spd->nomor_sppd);
-            $properties->setCreator(auth()->user()->name ?? 'System');
+            $properties->setCreator($spd->creator?->name ?? 'System');
 
             // Add sections and content
             $section = $phpWord->addSection();

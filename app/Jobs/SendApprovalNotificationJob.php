@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\Approval;
-use App\Notifications\ApprovalPendingNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,10 +40,6 @@ class SendApprovalNotificationJob implements ShouldQueue
             }
 
             Log::info("Sending approval notification to user {$approver->id}");
-
-            Notification::send($approver,
-                new ApprovalPendingNotification($this->approval)
-            );
 
             Log::info("Approval notification sent successfully");
 
