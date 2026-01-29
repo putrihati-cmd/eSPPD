@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// Health check routes (public, for monitoring)
+Route::get('/health', [\App\Http\Controllers\HealthCheckController::class, 'health']);
+Route::get('/health/metrics', [\App\Http\Controllers\HealthCheckController::class, 'metrics']);
+
 // Public routes
 Route::post('/auth/login', [AuthController::class, 'login']);
 
@@ -22,18 +26,41 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/user', [AuthController::class, 'user']);
 
-    // SPPD CRUD
+    // SPPD CRUD (with both /sppd and /spd aliases for compatibility)
     Route::get('/sppd', [SppdController::class, 'index']);
     Route::post('/sppd', [SppdController::class, 'store']);
     Route::get('/sppd/{spd}', [SppdController::class, 'show']);
     Route::put('/sppd/{spd}', [SppdController::class, 'update']);
     Route::delete('/sppd/{spd}', [SppdController::class, 'destroy']);
 
+    // SPPD Alias routes (/spd for test compatibility)
+    Route::get('/spd', [SppdController::class, 'index']);
+    Route::post('/spd', [SppdController::class, 'store']);
+    Route::get('/spd/{spd}', [SppdController::class, 'show']);
+    Route::put('/spd/{spd}', [SppdController::class, 'update']);
+    Route::delete('/spd/{spd}', [SppdController::class, 'destroy']);
+
     // SPPD Actions
     Route::post('/sppd/{spd}/submit', [SppdController::class, 'submit']);
     Route::post('/sppd/{spd}/approve', [SppdController::class, 'approve']);
     Route::post('/sppd/{spd}/reject', [SppdController::class, 'reject']);
     Route::post('/sppd/{spd}/complete', [SppdController::class, 'complete']);
+
+    // SPPD Actions (/spd alias routes)
+    Route::post('/spd/{spd}/submit', [SppdController::class, 'submit']);
+    Route::post('/spd/{spd}/approve', [SppdController::class, 'approve']);
+    Route::post('/spd/{spd}/reject', [SppdController::class, 'reject']);
+    Route::post('/spd/{spd}/complete', [SppdController::class, 'complete']);
+
+    // Approval endpoints (for workflow tests)
+    Route::get('/spd/{spd}/approvals', [SppdController::class, 'listApprovals']);
+    Route::post('/spd/{spd}/approvals', [SppdController::class, 'storeApproval']);
+    Route::get('/sppd/{spd}/approvals', [SppdController::class, 'listApprovals']);
+    Route::post('/sppd/{spd}/approvals', [SppdController::class, 'storeApproval']);
+
+    // PDF Export
+    Route::post('/spd/{spd}/export-pdf', [SppdController::class, 'exportPdf']);
+    Route::post('/sppd/{spd}/export-pdf', [SppdController::class, 'exportPdf']);
 
     // Mobile API
     Route::prefix('mobile')->group(function () {

@@ -65,4 +65,41 @@ class CacheService
         Cache::forget("dashboard_stats_{$organizationId}");
         Cache::forget("budgets_{$organizationId}_" . now()->year);
     }
+
+    /**
+     * Generate cache key with prefix
+     */
+    public function makeKey(string $key, ?int $id = null): string
+    {
+        if ($id !== null) {
+            return "{$key}:{$id}";
+        }
+        return "app_{$key}";
+    }
+
+    /**
+     * Check if key exists in cache
+     */
+    public function has(string $key): bool
+    {
+        return Cache::has($this->makeKey($key));
+    }
+
+    /**
+     * Invalidate specific cache key
+     */
+    public function invalidate(string $key): bool
+    {
+        return Cache::forget($this->makeKey($key));
+    }
+
+    /**
+     * Get value with expiration
+     */
+    public function getWithExpiration(string $key, int $ttl = 60): mixed
+    {
+        return Cache::remember($this->makeKey($key), $ttl, function () {
+            return null;
+        });
+    }
 }

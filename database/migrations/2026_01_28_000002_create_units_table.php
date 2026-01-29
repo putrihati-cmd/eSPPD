@@ -22,6 +22,10 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
+        });
+
+        // Add self-reference FK after table is created (PostgreSQL compatible)
+        Schema::table('units', function (Blueprint $table) {
             $table->foreign('parent_id')->references('id')->on('units')->onDelete('set null');
         });
     }

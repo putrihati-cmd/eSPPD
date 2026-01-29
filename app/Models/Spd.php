@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Spd extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
         'organization_id',
@@ -30,11 +31,24 @@ class Spd extends Model
         'estimated_cost',
         'actual_cost',
         'transport_type',
+        'travel_type',           // dari ceking.md: dalam_kota/luar_kota/luar_negeri
         'needs_accommodation',
         'status',
+        'current_approver_nip',  // dari ceking.md: tracking siapa yang approve saat ini
+        'rejection_reason',      // dari ceking.md: alasan ditolak
+        'approved_at',           // dari ceking.md: timestamp final approval
+        'approved_by',           // dari ceking.md: siapa yang final approve
         'created_by',
         'submitted_at',
         'completed_at',
+        'deleted_by',            // dari fitur.md: siapa yang hapus (NIP)
+        'deleted_reason',        // dari fitur.md: alasan dihapus
+        // Revision fields (dari fitur.md)
+        'revision_count',
+        'revision_history',
+        'rejected_at',
+        'rejected_by',
+        'previous_approver_nip',
     ];
 
     public function followers(): HasMany
@@ -50,6 +64,7 @@ class Spd extends Model
         'needs_accommodation' => 'boolean',
         'submitted_at' => 'datetime',
         'completed_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function organization(): BelongsTo
@@ -85,6 +100,37 @@ class Spd extends Model
     public function report(): HasOne
     {
         return $this->hasOne(TripReport::class);
+    }
+
+    /**
+     * Get the employee who approved this SPD (from ceking.md)
+     */
+    public function approvedByEmployee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'approved_by');
+    }
+
+    /**
+     * Get required approval level based on travel type (from ceking.md)
+     * luar_negeri: level 5 (WR)
+     * luar_kota: level 4 (Dekan)
+     * dalam_kota: level 3 (Wadek)
+     */
+    public function getRequiredLevel(): int
+    {
+        return match($this->travel_type ?? 'dalam_kota') {
+            'luar_negeri' => 5,
+            'luar_kota' => 4,
+            default => 3,
+        };
+    }
+
+    /**
+     * Check if this SPD can be finally approved by the given level
+     */
+    public function canBeFinallyApprovedBy(int $approverLevel): bool
+    {
+        return $approverLevel >= $this->getRequiredLevel();
     }
 
     /**

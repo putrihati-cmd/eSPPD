@@ -34,17 +34,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Add escalated_at to approvals table
-        Schema::table('approvals', function (Blueprint $table) {
-            $table->timestamp('escalated_at')->nullable()->after('notes');
-        });
+        // Note: escalated_at and reminded_at columns are added in scheduled_reports migration
+        // with proper hasColumn checks to avoid duplicates
     }
 
     public function down(): void
     {
-        Schema::table('approvals', function (Blueprint $table) {
-            $table->dropColumn('escalated_at');
-        });
         Schema::dropIfExists('approval_delegates');
         Schema::dropIfExists('approval_rules');
     }

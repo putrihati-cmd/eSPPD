@@ -24,6 +24,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed new RBAC roles first
+        $this->call([
+            RoleSeeder::class,
+        ]);
+
         // Create Organization
         $organization = Organization::create([
             'name' => 'UIN Saizu Purwokerto',
@@ -120,14 +125,17 @@ class DatabaseSeeder extends Seeder
             ]);
 
             // Create user for this employee
-            $role = $isAdmin ? 'admin' : ($isApprover ? 'approver' : 'employee');
+            $roleName = $isAdmin ? 'admin' : ($isApprover ? 'dekan' : 'dosen');
+            $roleModel = \App\Models\Role::where('name', $roleName)->first();
+            
             User::create([
                 'name' => $empData['name'],
                 'email' => $empData['email'],
                 'password' => Hash::make('password'),
                 'organization_id' => $organization->id,
                 'employee_id' => $employee->id,
-                'role' => $role,
+                'role' => $roleName,
+                'role_id' => $roleModel?->id,
             ]);
 
             // Set head of unit for approver

@@ -8,50 +8,8 @@
             Kembali ke Daftar SPD
         </a>
 
-        <!-- Action Buttons -->
-        <div class="flex gap-2">
-            @if ($spd->needsReport())
-                <a href="{{ route('reports.create', $spd) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Buat Laporan Perjalanan
-                </a>
-            @elseif($spd->report)
-                <a href="{{ route('reports.show', $spd->report) }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors">
-                    <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    Lihat Laporan
-                </a>
-            @endif
-            <a href="{{ route('spd.pdf.spt', $spd) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Download SPT
-            </a>
-            <a href="{{ route('spd.pdf.spd', $spd) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors">
-                <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Download SPD
-            </a>
-        </div>
+        <!-- Action Buttons (btn.md: RBAC-based visibility) -->
+        <x-spd-action-buttons :spd="$spd" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,13 +22,17 @@
                         <h2 class="text-xl font-bold text-slate-800">{{ $spd->destination }}</h2>
                         <p class="text-slate-500 mt-1">{{ $spd->spt_number }}</p>
                     </div>
+                    @php
+                        $statusBadgeClass = match ($spd->status) {
+                            'approved' => 'bg-emerald-100 text-emerald-700',
+                            'submitted' => 'bg-orange-100 text-orange-700',
+                            'rejected' => 'bg-red-100 text-red-700',
+                            'completed' => 'bg-blue-100 text-blue-700',
+                            default => 'bg-slate-100 text-slate-700',
+                        };
+                    @endphp
                     <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium 
-                        @if ($spd->status === 'approved') bg-emerald-100 text-emerald-700
-                        @elseif($spd->status === 'submitted') bg-orange-100 text-orange-700
-                        @elseif($spd->status === 'rejected') bg-red-100 text-red-700
-                        @elseif($spd->status === 'completed') bg-blue-100 text-blue-700
-                        @else bg-slate-100 text-slate-700 @endif">
+                        class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium {{ $statusBadgeClass }}">
                         {{ $spd->status_label }}
                     </span>
                 </div>
@@ -168,11 +130,15 @@
                     <div class="space-y-3">
                         @foreach ($spd->approvals as $approval)
                             <div class="flex items-start gap-3">
+                                @php
+                                    $approvalStatusClass = match ($approval->status) {
+                                        'approved' => 'bg-emerald-100 text-emerald-600',
+                                        'rejected' => 'bg-red-100 text-red-600',
+                                        default => 'bg-orange-100 text-orange-600',
+                                    };
+                                @endphp
                                 <div
-                                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium
-                                    @if ($approval->status === 'approved') bg-emerald-100 text-emerald-600
-                                    @elseif($approval->status === 'rejected') bg-red-100 text-red-600
-                                    @else bg-orange-100 text-orange-600 @endif">
+                                    class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium {{ $approvalStatusClass }}">
                                     {{ $approval->level }}
                                 </div>
                                 <div class="flex-1">

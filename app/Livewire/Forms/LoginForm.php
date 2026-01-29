@@ -12,8 +12,8 @@ use Livewire\Form;
 
 class LoginForm extends Form
 {
-    #[Validate('required|string|email')]
-    public string $email = '';
+    #[Validate('required|string')]
+    public string $email = ''; // Using 'email' property name for compatibility with Auth::attempt
 
     #[Validate('required|string')]
     public string $password = '';
@@ -30,11 +30,23 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
+        // Handle both NIP and email formats
+        // If email contains @, assume it's already an email
+        // Otherwise, append @uinsaizu.ac.id (assume it's NIP)
+        $emailToAuth = str_contains($this->email, '@')
+            ? $this->email
+            : $this->email . '@uinsaizu.ac.id';
+
+        $credentials = [
+            'email' => $emailToAuth,
+            'password' => $this->password,
+        ];
+
+        if (! Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'form.email' => trans('auth.failed'),
+                'form.email' => 'NIP atau password salah.',
             ]);
         }
 
@@ -46,7 +58,7 @@ class LoginForm extends Form
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 3)) {
             return;
         }
 
@@ -55,10 +67,7 @@ class LoginForm extends Form
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'form.email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'form.email' => "Terlalu banyak percobaan login. Akun diblokir selama $seconds detik. Silahkan hubungi admin.",
         ]);
     }
 

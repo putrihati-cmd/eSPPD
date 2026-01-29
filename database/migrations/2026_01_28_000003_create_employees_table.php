@@ -43,9 +43,9 @@ return new class extends Migration
         });
 
         // Add head_employee_id foreign key after employees table is created
-        Schema::table('units', function (Blueprint $table) {
-            $table->foreign('head_employee_id')->references('id')->on('employees')->onDelete('set null');
-        });
+        // Schema::table('units', function (Blueprint $table) {
+        //     $table->foreign('head_employee_id')->references('id')->on('employees')->onDelete('set null');
+        // });
     }
 
     /**

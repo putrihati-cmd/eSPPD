@@ -5,14 +5,19 @@ namespace App\Livewire;
 use App\Models\Approval;
 use App\Models\Budget;
 use App\Models\Spd;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
+    #[Layout('layouts.app')]
     public function render()
     {
-        $user = auth()->user();
+        /** @var User $user */
+        $user = Auth::user();
         $organizationId = $user->organization_id;
 
         // Efficient: Get all status counts in one query
@@ -60,9 +65,14 @@ class Dashboard extends Component
         $endDate = now()->endOfMonth();
         $startDate = now()->subMonths(5)->startOfMonth();
         
+        $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        $dateFormat = $driver === 'pgsql' 
+            ? "TO_CHAR(created_at, 'Mon')" 
+            : "DATE_FORMAT(created_at, '%b')";
+            
         $trends = Spd::where('organization_id', $organizationId)
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw("DATE_FORMAT(created_at, '%b') as month, COUNT(*) as count, MIN(created_at) as sort_date")
+            ->selectRaw("$dateFormat as month, COUNT(*) as count, MIN(created_at) as sort_date")
             ->groupBy('month')
             ->orderBy('sort_date')
             ->get();
@@ -113,12 +123,13 @@ class Dashboard extends Component
             ]);
         }
 
-        $view = match ($user->role) {
-            'admin' => 'livewire.dashboard.admin',
-            'approver' => 'livewire.dashboard.approver',
-            'employee' => 'livewire.dashboard.employee',
-            default => 'livewire.dashboard.employee', // Default fallback
-        };
+        $view = 'livewire.dashboard.employee';
+        
+        if ($user->isAdmin()) {
+            $view = 'livewire.dashboard.admin';
+        } elseif ($user->isApprover()) {
+            $view = 'livewire.dashboard.approver';
+        }
 
         return view($view, [
             'totalSpdThisMonth' => $totalSpdThisMonth,
@@ -132,7 +143,7 @@ class Dashboard extends Component
             'monthlyTrend' => $monthlyTrend,
             'statusDistribution' => $statusDistribution,
             'alerts' => $alerts,
-        ])->layout('layouts.app', ['header' => 'Dashboard']);
+        ]);
     }
 }
 
