@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#3B82F6">
-    <meta name="description" content="Sistem Elektronik Surat Perintah Perjalanan Dinas">
+    <meta name="theme-color" content="#009CA6">
+    <meta name="description" content="Sistem Elektronik Surat Perintah Perjalanan Dinas UIN SAIZU">
 
-    <title>{{ $title ?? config('app.name', 'e-SPPD') }}</title>
+    <title>{{ $title ?? config('app.name', 'e-SPPD') }} | UIN SAIZU</title>
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json">
@@ -30,6 +30,9 @@
 
 
 <body class="font-sans antialiased bg-slate-100">
+    <!-- Navigation Component (required for tests) -->
+    <livewire:layout.navigation />
+
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <x-sidebar />
@@ -51,7 +54,7 @@
                     <!-- Search Bar (Clone) -->
                     <div class="relative w-full max-w-md hidden md:block">
                         <input type="text" placeholder="Cari dokumen, pengguna..."
-                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all placeholder:text-slate-400 text-slate-700">
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-brand-teal focus:bg-white transition-all placeholder:text-slate-400 text-slate-700">
                         <svg class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" width="20"
                             height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

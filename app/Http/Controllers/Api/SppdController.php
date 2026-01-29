@@ -19,6 +19,11 @@ class SppdController extends Controller
     {
         $query = Spd::with(['employee', 'unit', 'budget']);
 
+        // Search by SPPD number
+        if ($request->has('search')) {
+            $query->where('spd_number', 'like', '%' . $request->search . '%');
+        }
+
         // Filter by status
         if ($request->has('status')) {
             $query->where('status', $request->status);
@@ -62,15 +67,18 @@ class SppdController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+            'employee_id' => 'required|uuid|exists:employees,id',
             'destination' => 'required|string|max:255',
             'purpose' => 'required|string',
             'departure_date' => 'required|date|after:today',
             'return_date' => 'required|date|after_or_equal:departure_date',
             'transport_type' => 'required|in:pesawat,kereta,bus,mobil_dinas,kapal',
-            'budget_id' => 'required|exists:budgets,id',
+            'budget_id' => 'required|uuid|exists:budgets,id',
             'invitation_number' => 'nullable|string',
         ]);
+
+        // Get employee to get organization and unit
+        $employee = \App\Models\Employee::find($validated['employee_id']);
 
         // Auto-generate nomor SPPD
         $year = now()->format('Y');
@@ -79,17 +87,22 @@ class SppdController extends Controller
         $spdNumber = sprintf("SPD/%s/%s/%03d", $year, $month, $count);
         $sptNumber = sprintf("SPT/%s/%s/%03d", $year, $month, $count);
 
-        // Calculate duration
         $duration = Carbon::parse($validated['departure_date'])
             ->diffInDays(Carbon::parse($validated['return_date'])) + 1;
 
+        /** @var \App\Models\User $authUser */
+        $authUser = $request->user();
+
         $spd = Spd::create([
             ...$validated,
+            'organization_id' => $employee->organization_id,
+            'unit_id' => $employee->unit_id,
             'spd_number' => $spdNumber,
             'spt_number' => $sptNumber,
             'duration' => $duration,
             'status' => 'draft',
-            'created_by' => auth()->id(),
+            'created_by' => $authUser->id,
+            'estimated_cost' => 0,
         ]);
 
         return response()->json([
@@ -115,6 +128,17 @@ class SppdController extends Controller
      */
     public function update(Request $request, Spd $spd): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // SECURITY: Only owner or admin can update
+        if ($spd->employee_id !== $user->employee_id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk mengubah SPPD ini',
+            ], 403);
+        }
+
         if ($spd->status !== 'draft') {
             return response()->json([
                 'success' => false,
@@ -146,11 +170,19 @@ class SppdController extends Controller
         ]);
     }
 
-    /**
-     * DELETE /api/sppd/{id} - Delete SPPD (hanya jika status draft)
-     */
-    public function destroy(Spd $spd): JsonResponse
+    public function destroy(Request $request, Spd $spd): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // SECURITY: Only owner or admin can delete
+        if ($spd->employee_id !== $user->employee_id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk menghapus SPPD ini',
+            ], 403);
+        }
+
         if ($spd->status !== 'draft') {
             return response()->json([
                 'success' => false,
@@ -169,8 +201,18 @@ class SppdController extends Controller
     /**
      * POST /api/sppd/{id}/submit - Submit untuk approval
      */
-    public function submit(Spd $spd): JsonResponse
+    public function submit(Request $request, Spd $spd): JsonResponse
     {
+        $user = $request->user();
+
+        // SECURITY: Only owner or admin can submit
+        if ($spd->employee_id !== $user->employee_id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda hanya dapat mengajukan SPPD milik Anda sendiri',
+            ], 403);
+        }
+
         if ($spd->status !== 'draft') {
             return response()->json([
                 'success' => false,
@@ -181,14 +223,6 @@ class SppdController extends Controller
         $spd->update([
             'status' => 'submitted',
             'submitted_at' => now(),
-        ]);
-
-        // Create approval record
-        Approval::create([
-            'spd_id' => $spd->id,
-            'approver_id' => $spd->employee->supervisor_id ?? null,
-            'level' => 1,
-            'status' => 'pending',
         ]);
 
         return response()->json([
@@ -203,7 +237,8 @@ class SppdController extends Controller
      */
     public function approve(Request $request, Spd $spd): JsonResponse
     {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
         // Check pending approval
         $approval = $spd->approvals()->where('status', 'pending')->first();
@@ -212,6 +247,14 @@ class SppdController extends Controller
                 'success' => false,
                 'message' => 'Tidak ada approval pending untuk SPPD ini',
             ], 404);
+        }
+
+        // Security Check: Ensure user is the assigned approver or Admin
+        if ($approval->approver_id !== $user->employee_id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki kewenangan untuk menyetujui dokumen ini',
+            ], 403);
         }
 
         $approval->update([
@@ -239,13 +282,28 @@ class SppdController extends Controller
         ]);
 
         $approval = $spd->approvals()->where('status', 'pending')->first();
-        if ($approval) {
-            $approval->update([
-                'status' => 'rejected',
-                'approved_at' => now(),
-                'notes' => $validated['alasan_penolakan'],
-            ]);
+        if (!$approval) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada approval pending untuk SPPD ini',
+            ], 404);
         }
+
+        // SECURITY: Check authorization
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        if ($approval->approver_id !== $user->employee_id && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki kewenangan untuk menolak dokumen ini',
+            ], 403);
+        }
+
+        $approval->update([
+            'status' => 'rejected',
+            'approved_at' => now(),
+            'notes' => $validated['alasan_penolakan'],
+        ]);
 
         $spd->update([
             'status' => 'rejected',
@@ -261,8 +319,19 @@ class SppdController extends Controller
     /**
      * POST /api/sppd/{id}/complete - Mark as completed
      */
-    public function complete(Spd $spd): JsonResponse
+    public function complete(Request $request, Spd $spd): JsonResponse
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // SECURITY: Only Admin or Finance can mark as completed
+        if (!$user->isFinance() && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya Admin atau Bagian Keuangan yang dapat menyelesaikan SPPD',
+            ], 403);
+        }
+
         if ($spd->status !== 'approved') {
             return response()->json([
                 'success' => false,
@@ -279,6 +348,85 @@ class SppdController extends Controller
             'success' => true,
             'message' => 'SPPD berhasil diselesaikan',
             'data' => new SppdResource($spd->fresh()),
+        ]);
+    }
+
+    /**
+     * GET /api/sppd/{id}/approvals - List approvals for an SPPD
+     */
+    public function listApprovals(Spd $spd): JsonResponse
+    {
+        $approvals = $spd->approvals()->with('approver')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $approvals,
+        ]);
+    }
+
+    /**
+     * POST /api/sppd/{id}/approvals - Create approval for an SPPD
+     */
+    public function storeApproval(Request $request, Spd $spd): JsonResponse
+    {
+        $user = $request->user();
+
+        // Only approvers or admins can approve
+        if ($user->role !== 'approver' && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk menyetujui SPPD',
+            ], 403);
+        }
+
+        // Check if user is the SPD creator (cannot approve own SPPD)
+        if ($spd->employee_id === $user->employee_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak dapat menyetujui SPPD milik Anda sendiri',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'notes' => 'nullable|string',
+            'level' => 'nullable|integer',
+        ]);
+
+        $approval = Approval::create([
+            'spd_id' => $spd->id,
+            'approver_id' => $user->employee_id,
+            'status' => $validated['status'],
+            'notes' => $validated['notes'] ?? null,
+            'level' => $validated['level'] ?? 1,
+            'approved_at' => now(),
+        ]);
+
+        // Update SPPD status based on approval status
+        if ($validated['status'] === 'approved') {
+            $spd->update(['status' => 'approved']);
+        } elseif ($validated['status'] === 'rejected') {
+            $spd->update(['status' => 'rejected']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Approval berhasil dibuat',
+            'data' => $approval,
+        ], 201);
+    }
+
+    /**
+     * POST /api/sppd/{id}/export-pdf - Export SPPD to PDF
+     */
+    public function exportPdf(Request $request, Spd $spd): JsonResponse
+    {
+        // Queue a PDF generation job
+        \App\Jobs\GenerateSpdPdfJob::dispatch($spd, auth()->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permintaan export PDF sedang diproses. Anda akan menerima notifikasi ketika siap diunduh.',
         ]);
     }
 }

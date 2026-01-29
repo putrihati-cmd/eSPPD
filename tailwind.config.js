@@ -1,39 +1,41 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-import forms from '@tailwindcss/forms';
-
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+        './resources/js/**/*.js',
     ],
-
     theme: {
         extend: {
-            fontFamily: {
-                sans: ['Inter', ...defaultTheme.fontFamily.sans],
-            },
             colors: {
                 brand: {
-                    DEFAULT: '#02A0AC', // Primary
-                    50: '#F0FAFA',
-                    100: '#D1EFEF',
-                    500: '#02A0AC',
-                    600: '#4DA790', // Brand Dark / Shadow
-                    800: '#015F66',
-                },
-                accent: {
-                    DEFAULT: '#CBE155', // Accent
-                    hover: '#b8cc48',
-                },
-                teal: {
-                    light: '#A2DBDC', // Light Teal
-                },
-                paper: '#FDFEFE', // White/Background
+                    DEFAULT: '#009CA6',
+                    50: '#E6F5F6',
+                    100: '#CCEBEB',
+                    200: '#99D6D9',
+                    300: '#66C2C7',
+                    400: '#33ADB5',
+                    500: '#009CA6',
+                    600: '#008C95',
+                    700: '#007D85',
+                    800: '#006D74',
+                    900: '#005E64',
+                    teal: '#009CA6',
+                    lime: '#D4E157',
+                    dark: '#007A82',
+                }
             },
+            boxShadow: {
+                'atoms-card': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            },
+            borderRadius: {
+                'atoms': '8px',
+            },
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            }
         },
     },
-
-    plugins: [forms],
+    plugins: [require('@tailwindcss/forms')],
 };

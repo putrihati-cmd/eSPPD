@@ -1,12 +1,12 @@
 <div>
     <!-- Welcome Card -->
     <div class="mb-6">
-        <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-brand-teal to-brand-dark rounded-2xl p-6 text-white relative overflow-hidden">
             <div class="relative z-10">
                 <h2 class="text-2xl font-bold mb-2">Selamat Datang, {{ explode(' ', auth()->user()->name)[0] }}! 👋</h2>
-                <p class="text-blue-100 mb-4">Kelola perjalanan dinas Anda dengan mudah dan efisien</p>
+                <p class="text-white/90 mb-4 font-medium">Kelola perjalanan dinas Anda dengan mudah dan efisien</p>
                 <a href="{{ route('spd.create') }}"
-                    class="inline-flex items-center gap-2 bg-white text-blue-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-50 transition-colors">
+                    class="inline-flex items-center gap-2 bg-brand-lime text-[#1A1A1A] font-bold px-5 py-2.5 rounded-xl hover:bg-white transition-all shadow-lg hover:shadow-xl">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -16,7 +16,7 @@
             </div>
             <!-- Decorative circles -->
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
-            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-white/10 rounded-full"></div>
+            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-brand-lime/10 rounded-full"></div>
         </div>
     </div>
 
@@ -29,8 +29,8 @@
                     <p class="text-sm text-slate-500 mb-1">Total SPD Bulan Ini</p>
                     <p class="text-3xl font-bold text-slate-800">{{ $totalSpdThisMonth }}</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-brand-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
@@ -76,8 +76,8 @@
                     <p class="text-sm text-slate-500 mb-1">Selesai</p>
                     <p class="text-3xl font-bold text-blue-500">{{ $completedSpd }}</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -90,11 +90,16 @@
     @if ($alerts->count() > 0)
         <div class="mb-6 space-y-3">
             @foreach ($alerts as $alert)
-                <div
-                    class="flex items-center gap-3 p-4 rounded-xl border
-                @if ($alert['type'] === 'danger') bg-red-50 border-red-200 text-red-800
-                @elseif($alert['type'] === 'warning') bg-orange-50 border-orange-200 text-orange-800
-                @else bg-blue-50 border-blue-200 text-blue-800 @endif">
+                <div @class([
+                    'flex items-center gap-3 p-4 rounded-xl border',
+                    'bg-red-50 border-red-200 text-red-800' => $alert['type'] === 'danger',
+                    'bg-orange-50 border-orange-200 text-orange-800' =>
+                        $alert['type'] === 'warning',
+                    'bg-blue-50 border-blue-200 text-blue-800' => !in_array($alert['type'], [
+                        'danger',
+                        'warning',
+                    ]),
+                ])>
                     @if ($alert['type'] === 'danger')
                         <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -140,8 +145,9 @@
         <!-- Recent SPD -->
         <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-slate-800">SPD Terbaru</h3>
-                <a href="{{ route('spd.index') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">Lihat
+                <h3 class="text-lg font-bold text-slate-800">SPD Terbaru</h3>
+                <a href="{{ route('spd.index') }}"
+                    class="text-sm text-brand-teal hover:text-brand-dark font-bold hover:underline">Lihat
                     Semua →</a>
             </div>
 
@@ -150,8 +156,8 @@
                     @foreach ($recentSpds as $spd)
                         <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-xl">
                             <div
-                                class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-brand-teal" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -165,16 +171,22 @@
                                 <p class="text-xs text-slate-400 mt-1">{{ $spd->purpose }}</p>
                             </div>
                             <div class="text-right flex-shrink-0">
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium 
-                                    @if ($spd->status === 'approved') bg-emerald-100 text-emerald-700
-                                    @elseif($spd->status === 'submitted') bg-orange-100 text-orange-700
-                                    @elseif($spd->status === 'rejected') bg-red-100 text-red-700
-                                    @elseif($spd->status === 'completed') bg-blue-100 text-blue-700
-                                    @else bg-slate-100 text-slate-700 @endif">
+                                <span @class([
+                                    'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+                                    'bg-emerald-100 text-emerald-700' => $spd->status === 'approved',
+                                    'bg-orange-100 text-orange-700' => $spd->status === 'submitted',
+                                    'bg-red-100 text-red-700' => $spd->status === 'rejected',
+                                    'bg-blue-100 text-blue-700' => $spd->status === 'completed',
+                                    'bg-slate-100 text-slate-700' => !in_array($spd->status, [
+                                        'approved',
+                                        'submitted',
+                                        'rejected',
+                                        'completed',
+                                    ]),
+                                ])>
                                     {{ $spd->status_label }}
                                 </span>
-                                <p class="text-sm font-semibold text-blue-600 mt-1">{{ $spd->formatCost() }}</p>
+                                <p class="text-sm font-bold text-brand-teal mt-1">{{ $spd->formatCost() }}</p>
                             </div>
                         </div>
                     @endforeach
@@ -226,7 +238,7 @@
             </div>
 
             <a href="{{ route('budgets.index') }}"
-                class="block mt-4 text-center text-sm text-blue-600 hover:text-blue-700 font-medium">
+                class="block mt-4 text-center text-sm text-brand-teal hover:text-brand-dark font-bold hover:underline">
                 Lihat Detail Budget →
             </a>
         </div>
@@ -247,8 +259,8 @@
                         datasets: [{
                             label: 'Jumlah SPD',
                             data: {!! json_encode($monthlyTrend->pluck('count')) !!},
-                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(0, 156, 166, 0.8)',
+                            borderColor: 'rgba(0, 156, 166, 1)',
                             borderWidth: 1,
                             borderRadius: 8,
                         }]

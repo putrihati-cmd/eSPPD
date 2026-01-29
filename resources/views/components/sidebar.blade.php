@@ -7,16 +7,13 @@
     <div class="p-6 border-b border-slate-100 flex items-center gap-3">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
             <div
-                class="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30">
-                <svg class="w-6 h-6 text-white" width="24" height="24" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+                class="w-10 h-10 bg-brand-teal rounded-xl flex items-center justify-center shadow-lg shadow-brand-teal/30">
+                <img src="{{ asset('images/logo.png') }}" alt="Logo"
+                    class="w-7 h-7 object-contain brightness-0 invert">
             </div>
             <div>
                 <h1 class="text-xl font-bold text-slate-800 tracking-tight">e-SPPD</h1>
-                <p class="text-xs text-brand-600 font-medium">Sistem Perjalanan Dinas</p>
+                <p class="text-[10px] text-brand-teal font-bold uppercase tracking-wider">UIN SAIZU Purwokerto</p>
             </div>
         </a>
     </div>
@@ -67,7 +64,7 @@
                 @endphp
                 @if ($pendingCount > 0)
                     <span
-                        class="ml-auto bg-brand-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm shadow-brand-500/20">
+                        class="ml-auto bg-brand-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm shadow-brand-teal/20">
                         {{ $pendingCount }}
                     </span>
                 @endif
@@ -119,6 +116,15 @@
                     </svg>
                     Pengaturan
                 </x-sidebar-link>
+
+                <x-sidebar-link href="{{ route('admin.users.index') }}" :active="str_starts_with($currentRoute, 'admin.users')">
+                    <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    Manajemen User
+                </x-sidebar-link>
             </div>
         @endif
     </nav>
@@ -128,7 +134,7 @@
         <div class="p-4 border-t border-slate-100">
             <div class="flex items-center gap-3">
                 <div
-                    class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-700 font-bold border border-brand-100">
+                    class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-teal font-bold border border-brand-100">
                     {{ auth()->user()->initials }}
                 </div>
                 <div class="flex-1 min-w-0">

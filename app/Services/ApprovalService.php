@@ -27,10 +27,18 @@ class ApprovalService
 
         if ($action === 'approve') {
             $this->approve($currentApproval, $notes);
-            $this->checkAndProceed($spd);
+            $this->checkAndProceed($spd, $currentApproval);
         } elseif ($action === 'reject') {
             $this->reject($currentApproval, $notes);
-            $spd->update(['status' => 'rejected']);
+            // Update with rejection_reason from ceking.md + rejection tracking from fitur.md
+            $spd->update([
+                'status' => 'rejected',
+                'rejection_reason' => $notes,
+                'current_approver_nip' => null,
+                'rejected_at' => now(),
+                'rejected_by' => $currentApproval->approver?->nip ?? auth()->user()?->employee?->nip,
+                'previous_approver_nip' => $currentApproval->approver?->nip, // For resubmission
+            ]);
         }
 
         return true;
@@ -61,19 +69,45 @@ class ApprovalService
     }
 
     /**
-     * Check if all approvals done and proceed
+     * Check if all approvals done and proceed (enhanced for ceking.md + fitur.md)
      */
-    protected function checkAndProceed(Spd $spd): void
+    protected function checkAndProceed(Spd $spd, ?Approval $lastApproval = null): void
     {
         $pendingCount = $spd->approvals()->where('status', 'pending')->count();
 
         if ($pendingCount === 0) {
-            // All approvals completed
-            $spd->update(['status' => 'approved']);
+            // All approvals completed - Final approve (from ceking.md)
+            // Generate nomor surat otomatis (dari fitur.md)
+            $sptNumber = $spd->spt_number;
+            
+            if (empty($sptNumber)) {
+                // Use NomorSuratService to generate with retry for race condition
+                $nomorData = \App\Services\NomorSuratService::generateWithRetry(
+                    config('esppd.unit_default'),
+                    config('esppd.kode_bagian_default')
+                );
+                $sptNumber = $nomorData['nomor_lengkap'];
+                
+                Log::info("Generated nomor surat: {$sptNumber} for SPD {$spd->id}");
+            }
+            
+            $spd->update([
+                'status' => 'approved',
+                'approved_at' => now(),
+                'approved_by' => $lastApproval?->approver_id,
+                'current_approver_nip' => null,
+                'spt_number' => $sptNumber, // Auto-generated nomor surat
+            ]);
+            
+            Log::info("SPD {$spd->spd_number} finally approved with nomor: {$sptNumber}");
         } else {
-            // Notify next approver
+            // Notify next approver and update current_approver_nip (from ceking.md)
             $nextApproval = $spd->getPendingApproval();
             if ($nextApproval) {
+                // Update current_approver_nip for tracking
+                $spd->update([
+                    'current_approver_nip' => $nextApproval->approver?->nip,
+                ]);
                 $this->notify($nextApproval);
             }
         }

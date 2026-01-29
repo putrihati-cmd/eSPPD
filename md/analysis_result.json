@@ -1,0 +1,107 @@
+{
+  "excel": {
+    "DATA": {
+      "rows": 551,
+      "columns": [
+        "No",
+        "Nama Tanpa Gelar",
+        "Nama dengan Gelar",
+        "Nama dengan Gelar.1",
+        "NIP Spaceless",
+        "NIP",
+        "NIDN",
+        "NUPTK",
+        "Status Kepegawaian",
+        "Kategori",
+        "L/P",
+        "Tempat Lahir",
+        "Tanggal Lahir",
+        "Pangkat",
+        "Gol",
+        "TMT",
+        "No SK",
+        "Jabatan",
+        "Jenis",
+        "TMT.1",
+        "No SK.1",
+        "Tanggal SK",
+        "Kelas Jabatan",
+        "Jabatan.1",
+        "Ijazah",
+        "MASA KERJA KESELURUHAN",
+        "Tanggal Pensiun"
+      ],
+      "sample_row": {
+        "No": NaN,
+        "Nama Tanpa Gelar": NaN,
+        "Nama dengan Gelar": "(Data Kepegawaian)",
+        "Nama dengan Gelar.1": "(Data Riil)",
+        "NIP Spaceless": NaN,
+        "NIP": NaN,
+        "NIDN": NaN,
+        "NUPTK": NaN,
+        "Status Kepegawaian": NaN,
+        "Kategori": "Dosen /  Pegawai",
+        "L/P": NaN,
+        "Tempat Lahir": NaN,
+        "Tanggal Lahir": NaN,
+        "Pangkat": NaN,
+        "Gol": NaN,
+        "TMT": "Golongan",
+        "No SK": "Pangkat Terakhir",
+        "Jabatan": "(JPT/JA/JF)",
+        "Jenis": "JPT/JA/JF",
+        "TMT.1": "Jabatan",
+        "No SK.1": "Jabatan Terakhir",
+        "Tanggal SK": NaN,
+        "Kelas Jabatan": NaN,
+        "Jabatan.1": "Tugas Tambahan",
+        "Ijazah": "Terakhir",
+        "MASA KERJA KESELURUHAN": NaN,
+        "Tanggal Pensiun": NaN
+      }
+    },
+    "STATISTIK": {
+      "rows": 44,
+      "columns": [
+        "REKAPITULASI",
+        "Laki-laki",
+        "Perempuan",
+        "Total"
+      ],
+      "sample_row": {
+        "REKAPITULASI": "Dosen PNS",
+        "Laki-laki": 134,
+        "Perempuan": 78,
+        "Total": 212
+      }
+    }
+  },
+  "word": {
+    "paragraphs": 5,
+    "tables_count": 2,
+    "tables": [
+      {
+        "index": 0,
+        "rows": 20,
+        "cols": 4,
+        "headers": [
+          "LAPORAN PERJALANAN DINAS",
+          "LAPORAN PERJALANAN DINAS",
+          "LAPORAN PERJALANAN DINAS",
+          "LAPORAN PERJALANAN DINAS"
+        ]
+      },
+      {
+        "index": 1,
+        "rows": 7,
+        "cols": 2,
+        "headers": [
+          "",
+          "Purwokerto, 3 November 2025"
+        ]
+      }
+    ],
+    "paragraph_texts": []
+  }
+}

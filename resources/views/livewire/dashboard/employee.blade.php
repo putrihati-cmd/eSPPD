@@ -1,12 +1,12 @@
 <div>
     <!-- Welcome Card -->
     <div class="mb-6">
-        <div class="bg-gradient-to-r from-brand-500 to-brand-600 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div class="bg-gradient-to-r from-brand-teal to-brand-dark rounded-2xl p-6 text-white relative overflow-hidden">
             <div class="relative z-10">
-                <h2 class="text-2xl font-bold mb-2">Halo, {{ explode(' ', auth()->user()->name)[0] }}!</h2>
-                <p class="text-brand-50 mb-4">Siap untuk perjalanan dinas berikutnya?</p>
+                <h2 class="text-2xl font-bold mb-2">Halo, {{ explode(' ', auth()->user()->name)[0] }}! 👋</h2>
+                <p class="text-white/90 mb-4 font-medium">Siap untuk pengajuan perjalanan dinas berikutnya?</p>
                 <a href="{{ route('spd.create') }}"
-                    class="inline-flex items-center gap-2 bg-white text-brand-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-50 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 bg-brand-lime text-[#1A1A1A] font-bold px-5 py-2.5 rounded-xl hover:bg-white transition-all shadow-lg hover:shadow-xl">
                     <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -15,26 +15,26 @@
                 </a>
             </div>
             <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full"></div>
+            <div class="absolute -right-5 -bottom-5 w-24 h-24 bg-brand-lime/10 rounded-full"></div>
         </div>
     </div>
 
-    <!-- Employee Stats (Clone Style) -->
+    <!-- Employee Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div
-            class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-brand-500 hover:shadow-md transition-shadow">
-            <p class="text-sm font-medium text-slate-500 mb-1">SPD Saya (Bulan Ini)</p>
-            <p class="text-3xl font-bold text-slate-800">{{ $totalSpdThisMonth }}</p>
+            class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-brand-teal hover:shadow-md transition-all">
+            <p class="text-sm font-bold text-slate-500 mb-1">SPD Saya (Bulan Ini)</p>
+            <p class="text-3xl font-extrabold text-slate-800">{{ $totalSpdThisMonth }}</p>
         </div>
         <div
-            class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-            <p class="text-sm font-medium text-slate-500 mb-1">Menunggu Persetujuan</p>
-            <p class="text-3xl font-bold text-orange-500">{{ $pendingApproval }}</p>
+            class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-orange-500 hover:shadow-md transition-all">
+            <p class="text-sm font-bold text-slate-500 mb-1">Menunggu Persetujuan</p>
+            <p class="text-3xl font-extrabold text-orange-500">{{ $pendingApproval }}</p>
         </div>
         <div
-            class="bg-white rounded-xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-red-500 hover:shadow-md transition-shadow">
-            <p class="text-sm font-medium text-slate-500 mb-1">Laporan Tertunda</p>
-            {{-- Placeholder logic for My Reports --}}
-            <p class="text-3xl font-bold text-red-500">0</p>
+            class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 border-l-4 border-l-red-500 hover:shadow-md transition-all">
+            <p class="text-sm font-bold text-slate-500 mb-1">Laporan Tertunda</p>
+            <p class="text-3xl font-extrabold text-red-500">0</p>
         </div>
     </div>
 
@@ -53,12 +53,17 @@
                                 {{ $spd->return_date->format('d M Y') }}</p>
                         </div>
                         <div class="text-right">
-                            <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium 
-                                @if ($spd->status === 'approved') bg-emerald-100 text-emerald-700
-                                @elseif($spd->status === 'submitted') bg-orange-100 text-orange-700
-                                @elseif($spd->status === 'rejected') bg-red-100 text-red-700
-                                @else bg-slate-100 text-slate-700 @endif">
+                            <span @class([
+                                'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+                                'bg-emerald-100 text-emerald-700' => $spd->status === 'approved',
+                                'bg-orange-100 text-orange-700' => $spd->status === 'submitted',
+                                'bg-red-100 text-red-700' => $spd->status === 'rejected',
+                                'bg-slate-100 text-slate-700' => !in_array($spd->status, [
+                                    'approved',
+                                    'submitted',
+                                    'rejected',
+                                ]),
+                            ])>
                                 {{ $spd->status_label }}
                             </span>
                         </div>

@@ -98,6 +98,14 @@ class MobileApiController extends Controller
      */
     public function quickSubmit(Request $request, Spd $spd): JsonResponse
     {
+        // Authorization check: only owner can submit their own SPD
+        if ($spd->employee_id !== $request->user()->employee_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk submit SPPD ini',
+            ], 403);
+        }
+
         if ($spd->status !== 'draft') {
             return response()->json([
                 'success' => false,
@@ -116,18 +124,54 @@ class MobileApiController extends Controller
         ]);
     }
 
+    /**
+     * Approve SPPD - with proper authorization
+     */
     public function quickApprove(Request $request, Spd $spd): JsonResponse
     {
-        $spd->update([
-            'status' => 'approved',
-            'approved_at' => now(),
-            'approved_by' => $request->user()->employee_id,
-        ]);
+        $user = $request->user();
+        
+        // Authorization: Only users with approver role (level >= 2) can approve
+        if (!$user->isApprover()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk menyetujui SPPD',
+            ], 403);
+        }
+
+        // Check if this is the correct approver for this SPD
+        $pendingApproval = $spd->getPendingApproval();
+        if (!$pendingApproval) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tidak ada approval pending untuk SPPD ini',
+            ], 400);
+        }
+
+        // Verify the user is the assigned approver or is admin
+        $isAssignedApprover = $pendingApproval->approver_id === $user->employee_id;
+        if (!$isAssignedApprover && !$user->isAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda bukan approver yang ditunjuk untuk SPPD ini',
+            ], 403);
+        }
+
+        // Use ApprovalService to ensure consistent logic (chain approval, notifications, numbering)
+        $approvalService = app(\App\Services\ApprovalService::class);
+        $success = $approvalService->process($spd, 'approve', 'Approved via Mobile Quick Action');
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'SPPD berhasil disetujui',
+            ]);
+        }
 
         return response()->json([
-            'success' => true,
-            'message' => 'SPPD berhasil disetujui',
-        ]);
+            'success' => false,
+            'message' => 'Gagal memproses approval',
+        ], 500);
     }
 
     /**

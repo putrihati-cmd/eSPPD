@@ -265,13 +265,18 @@ class SpdCreate extends Component
             
         $searchableEmployees = collect();
         if (strlen($this->followerSearch) >= 2) {
-            $searchableEmployees = Employee::where('organization_id', $user->organization_id)
+            $query = Employee::where('organization_id', $user->organization_id)
                 ->where('is_active', true)
                 ->where('name', 'like', '%' . $this->followerSearch . '%')
-                ->where('id', '!=', $this->employee_id)
                 ->whereNotIn('id', $this->followers)
-                ->limit(5)
-                ->get();
+                ->limit(5);
+            
+            // Only exclude employee_id if it's not empty (fix PostgreSQL UUID error)
+            if (!empty($this->employee_id)) {
+                $query->where('id', '!=', $this->employee_id);
+            }
+            
+            $searchableEmployees = $query->get();
         }
 
         $budgets = Budget::where('organization_id', $user->organization_id)

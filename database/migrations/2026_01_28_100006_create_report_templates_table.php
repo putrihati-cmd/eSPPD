@@ -15,7 +15,7 @@ return new class extends Migration
                 $table->enum('type', ['trip_report', 'sppd', 'spt'])->default('trip_report');
                 $table->string('file_path');
                 $table->boolean('is_default')->default(false);
-                $table->foreignUuid('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamps();
 
                 $table->index(['type', 'is_default']);

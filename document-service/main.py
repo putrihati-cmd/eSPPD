@@ -91,6 +91,26 @@ class LaporanData(BaseModel):
     tanggal_laporan: str = Field(default_factory=lambda: datetime.now().strftime("%d %B %Y"))
 
 
+class LPJData(BaseModel):
+    """Full LPJ data model following lpj.md specification"""
+    employee: EmployeeData
+    nomor_sppd: str
+    nomor_surat_tugas: str = ""
+    tujuan: str
+    keperluan: str
+    tanggal_berangkat: str
+    tanggal_kembali: str
+    lama_perjalanan: int = 1
+    hari: str = ""  # Day name in Indonesian
+    undangan: str = "-"
+    kegiatan: str  # Report content
+    outputs: list = []  # List of outputs/results
+    tempat_lapor: str = "Purwokerto"
+    tanggal_lapor: str = Field(default_factory=lambda: datetime.now().strftime("%d %B %Y"))
+    atasan_nama: str = ""
+    atasan_nip: str = ""
+
+
 class GenerateResponse(BaseModel):
     success: bool
     message: str
@@ -239,6 +259,124 @@ async def generate_laporan(data: LaporanData):
         raise HTTPException(status_code=404, detail=f"Template not found: {e}")
     except Exception as e:
         logger.error(f"Error generating Laporan: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-lpj", response_model=GenerateResponse)
+async def generate_lpj(data: LPJData):
+    """
+    Generate LPJ (Laporan Perjalanan Dinas) document with table format.
+    This generates a formatted document matching the standard Indonesian government format.
+    """
+    try:
+        logger.info(f"Generating LPJ for: {data.employee.nama}")
+        
+        # Import LPJ generator
+        from services.lpj_generator import LPJDocumentGenerator
+        
+        lpj_gen = LPJDocumentGenerator(str(GENERATED_DIR))
+        
+        # Prepare data for generator
+        lpj_data = {
+            'name': data.employee.nama,
+            'nip': data.employee.nip,
+            'rank': data.employee.pangkat,
+            'golongan': data.employee.golongan,
+            'position': data.employee.jabatan,
+            'destination': data.tujuan,
+            'purpose': data.keperluan,
+            'day': data.hari,
+            'tanggal_berangkat': data.tanggal_berangkat,
+            'tanggal_kembali': data.tanggal_kembali,
+            'duration': data.lama_perjalanan,
+            'invitation': data.undangan,
+            'assignment_letter': data.nomor_surat_tugas,
+            'sppd_number': data.nomor_sppd,
+            'departure_date': data.tanggal_berangkat,
+            'report_content': data.kegiatan,
+            'outputs': data.outputs,
+            'return_date': data.tanggal_kembali,
+            'report_place': data.tempat_lapor,
+            'report_date': data.tanggal_lapor,
+            'superior_name': data.atasan_nama,
+            'superior_nip': data.atasan_nip,
+            'employee_name': data.employee.nama,
+        }
+        
+        output_path = lpj_gen.generate(lpj_data)
+        filename = Path(output_path).name
+        
+        return GenerateResponse(
+            success=True,
+            message="LPJ document generated successfully",
+            filename=filename,
+            download_url=f"/download/{filename}"
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating LPJ: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/generate-lpj-pdf", response_model=GenerateResponse)
+async def generate_lpj_pdf(data: LPJData):
+    """
+    Generate LPJ document and convert to PDF.
+    Requires LibreOffice to be installed.
+    """
+    try:
+        logger.info(f"Generating LPJ PDF for: {data.employee.nama}")
+        
+        from services.lpj_generator import LPJDocumentGenerator
+        
+        lpj_gen = LPJDocumentGenerator(str(GENERATED_DIR))
+        
+        # Prepare data
+        lpj_data = {
+            'name': data.employee.nama,
+            'nip': data.employee.nip,
+            'rank': data.employee.pangkat,
+            'golongan': data.employee.golongan,
+            'position': data.employee.jabatan,
+            'destination': data.tujuan,
+            'purpose': data.keperluan,
+            'day': data.hari,
+            'tanggal_berangkat': data.tanggal_berangkat,
+            'tanggal_kembali': data.tanggal_kembali,
+            'duration': data.lama_perjalanan,
+            'invitation': data.undangan,
+            'assignment_letter': data.nomor_surat_tugas,
+            'sppd_number': data.nomor_sppd,
+            'departure_date': data.tanggal_berangkat,
+            'report_content': data.kegiatan,
+            'outputs': data.outputs,
+            'return_date': data.tanggal_kembali,
+            'report_place': data.tempat_lapor,
+            'report_date': data.tanggal_lapor,
+            'superior_name': data.atasan_nama,
+            'superior_nip': data.atasan_nip,
+            'employee_name': data.employee.nama,
+        }
+        
+        # Generate Word first
+        docx_path = lpj_gen.generate(lpj_data)
+        
+        # Convert to PDF
+        pdf_path = lpj_gen.convert_to_pdf(docx_path)
+        filename = Path(pdf_path).name
+        
+        return GenerateResponse(
+            success=True,
+            message="LPJ PDF document generated successfully",
+            filename=filename,
+            download_url=f"/download/{filename}"
+        )
+        
+    except RuntimeError as e:
+        logger.error(f"PDF conversion error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating LPJ PDF: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

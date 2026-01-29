@@ -13,21 +13,18 @@ return new class extends Migration
     {
         Schema::table('spds', function (Blueprint $table) {
             $table->index(['employee_id', 'status']); // Compound index for filtering
-            $table->index(['departure_date', 'return_date']); // Range queries
+            // $table->index(['departure_date', 'return_date']); // Removed duplicate (exists in 095515)
             $table->index('created_by'); // For access control
         });
 
-        Schema::table('approvals', function (Blueprint $table) {
-            $table->index(['spd_id', 'status', 'level']); // Optimizing approval workflow lookups
-            $table->index('approver_id');
-            $table->index('created_at'); // Audit trail
-        });
+        // Schema::table('approvals', function (Blueprint $table) {
+        //     $table->index(['spd_id', 'status', 'level']); // Optimizing approval workflow lookups
+        //     $table->index('approver_id');
+        //     $table->index('created_at'); // Audit trail
+        // });
 
-        Schema::table('users', function (Blueprint $table) {
-            // NIP might be unique already, but index helps search if not unique
-            // Check if index exists first or just add it. `table->index` is safe enough usually
-            $table->index('nip'); 
-        });
+        // Users table indexing removed as 'nip' column does not exist on users table
+        // (It exists on employees table instead)
     }
 
     /**
@@ -47,8 +44,6 @@ return new class extends Migration
             $table->dropIndex(['created_at']);
         });
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropIndex(['nip']);
-        });
+        // Users table dropIndex removed
     }
 };

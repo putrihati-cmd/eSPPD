@@ -16,15 +16,20 @@ use App\Livewire\Spd\SpdIndex;
 use App\Livewire\Spd\SpdShow;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::get('/', function () {
+    if (\Illuminate\Support\Facades\Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
+});
 
 // Dashboard
 Route::get('dashboard', Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-// SPD Routes (Dosen & Admin)
-Route::middleware(['auth', 'role:employee,admin'])->prefix('spd')->name('spd.')->group(function () {
+// SPD Routes (All authenticated users with level >= 1)
+Route::middleware(['auth', 'role.level:1'])->prefix('spd')->name('spd.')->group(function () {
     Route::get('/', SpdIndex::class)->name('index');
     Route::get('/create', SpdCreate::class)->name('create');
     Route::get('/{spd}', SpdShow::class)->name('show');
@@ -34,16 +39,21 @@ Route::middleware(['auth', 'role:employee,admin'])->prefix('spd')->name('spd.')-
     Route::get('/{spd}/pdf/spd', [App\Http\Controllers\SpdPdfController::class, 'downloadSpd'])->name('pdf.spd');
     Route::get('/{spd}/preview/spt', [App\Http\Controllers\SpdPdfController::class, 'viewSpt'])->name('preview.spt');
     Route::get('/{spd}/preview/spd', [App\Http\Controllers\SpdPdfController::class, 'viewSpd'])->name('preview.spd');
+    
+    // Revision Routes (dari fitur.md - Flow Revisi SPPD)
+    Route::get('/{spd}/revisi', [App\Http\Controllers\SppdRevisionController::class, 'editRejected'])->name('revisi');
+    Route::post('/{spd}/resubmit', [App\Http\Controllers\SppdRevisionController::class, 'resubmit'])->name('resubmit');
+    Route::get('/{spd}/history', [App\Http\Controllers\SppdRevisionController::class, 'history'])->name('history');
 });
 
-// Approval Routes (Atasan & Admin)
-Route::middleware(['auth', 'role:approver,admin'])->prefix('approvals')->name('approvals.')->group(function () {
+// Approval Routes (Kaprodi+ Level >= 2)
+Route::middleware(['auth', 'role.level:2'])->prefix('approvals')->name('approvals.')->group(function () {
     Route::get('/', ApprovalIndex::class)->name('index');
     Route::get('/queue', ApprovalQueue::class)->name('queue');
 });
 
-// Reports / Trip Reports Routes (Dosen who travelled)
-Route::middleware(['auth', 'role:employee,admin'])->prefix('reports')->name('reports.')->group(function () {
+// Reports / Trip Reports Routes (All authenticated users)
+Route::middleware(['auth', 'role.level:1'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', ReportIndex::class)->name('index');
     Route::get('/builder', ReportBuilder::class)->name('builder');
     Route::get('/trip-report/create/{spd}', TripReportCreate::class)->name('create');
@@ -52,8 +62,8 @@ Route::middleware(['auth', 'role:employee,admin'])->prefix('reports')->name('rep
     Route::get('/trip-report/{report}/download', [App\Http\Controllers\TripReportPdfController::class, 'download'])->name('download');
 });
 
-// Employee Routes (Admin only, or Read-only for others - adjusting to Admin for now)
-Route::middleware(['auth', 'role:admin'])->prefix('employees')->name('employees.')->group(function () {
+// Employee Routes (Admin Level >= 98)
+Route::middleware(['auth', 'role.level:98'])->prefix('employees')->name('employees.')->group(function () {
     Route::get('/', EmployeeIndex::class)->name('index');
 });
 
@@ -75,9 +85,104 @@ Route::middleware(['auth'])->prefix('settings')->name('settings.')->group(functi
     Route::get('/', SettingsIndex::class)->name('index');
 });
 
+// ============================================
+// EMPLOYEE IMPORT ROUTES (from imp.md)
+// ============================================
+use App\Http\Controllers\ImportController;
+
+Route::middleware(['auth', 'role:admin'])->prefix('import')->name('import.')->group(function () {
+    Route::get('/employees', [ImportController::class, 'showForm'])->name('form');
+    Route::post('/employees', [ImportController::class, 'import'])->name('employees');
+    Route::get('/template', [ImportController::class, 'template'])->name('template');
+});
+
+// ============================================
+// SMART IMPORT (Python FastAPI with AI Detection)
+// ============================================
+use App\Http\Controllers\SmartImportController;
+
+Route::middleware(['auth', 'role:admin'])->prefix('smart-import')->name('smart-import.')->group(function () {
+    Route::get('/', [SmartImportController::class, 'index'])->name('index');
+    Route::post('/upload', [SmartImportController::class, 'upload'])->name('upload');
+    Route::post('/mapping', [SmartImportController::class, 'updateMapping'])->name('mapping');
+    Route::post('/validate/{jobId}', [SmartImportController::class, 'validate'])->name('validate');
+    Route::post('/process', [SmartImportController::class, 'process'])->name('process');
+    Route::post('/rollback/{jobId}', [SmartImportController::class, 'rollback'])->name('rollback');
+    Route::get('/status/{jobId}', [SmartImportController::class, 'status'])->name('status');
+});
+
 // Profile (from Breeze)
 Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
+// ============================================
+// FORGOT PASSWORD WITH OTP (NEW)
+// ============================================
+use App\Http\Controllers\Auth\ForgotPasswordController;
+
+Route::middleware('guest')->prefix('password-otp')->group(function () {
+    // Step 1: Request OTP
+    Route::get('/forgot', [ForgotPasswordController::class, 'showForgotForm'])->name('password.request.otp');
+    Route::post('/forgot', [ForgotPasswordController::class, 'sendOtp'])->name('password.send-otp');
+    
+    // Step 2: Verify OTP
+    Route::get('/verify/{token}', [ForgotPasswordController::class, 'showVerifyForm'])->name('password.otp');
+    Route::post('/verify', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify-otp');
+    
+    // Step 3: Reset Password
+    Route::get('/reset/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset-form');
+    Route::post('/reset', [ForgotPasswordController::class, 'resetPassword'])->name('password.reset.otp');
+});
+
+// Force Change Password (for first login)
+Route::middleware('auth')->group(function () {
+    Route::get('/change-password', function () {
+        return view('auth.force-change-password');
+    })->name('password.force-change');
+    
+    Route::post('/change-password', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'password' => 'required|min:8|confirmed',
+        ]);
+        
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'is_password_reset' => true,
+            'last_password_reset' => now()
+        ]);
+        
+        return redirect()->route('dashboard')->with('success', 'Password berhasil diubah!');
+    })->name('password.force-update');
+});
+
+// ============================================
+// BENDAHARA / FINANCE ROUTES
+// ============================================
+use App\Http\Controllers\Finance\BendaharaController;
+
+Route::middleware(['auth', 'role:bendahara,admin'])->prefix('finance')->name('finance.')->group(function () {
+    Route::get('/dashboard', [BendaharaController::class, 'dashboard'])->name('dashboard');
+    Route::get('/verification', [BendaharaController::class, 'pendingVerification'])->name('verification');
+    Route::post('/verify/{spd}', [BendaharaController::class, 'verify'])->name('verify');
+    Route::get('/payment', [BendaharaController::class, 'pendingPayment'])->name('payment');
+    Route::post('/payment/{spd}', [BendaharaController::class, 'processPayment'])->name('process-payment');
+    Route::get('/report', [BendaharaController::class, 'report'])->name('report');
+});
+
+// ============================================
+// ADMIN USER MANAGEMENT (from lupa.md)
+// ============================================
+use App\Http\Controllers\Admin\UserManagementController;
+
+Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    // User management - Gate check is inside controller
+    Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+    Route::patch('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+    Route::get('/users/{user}/detail', [UserManagementController::class, 'show'])->name('users.show');
+});
+
 require __DIR__.'/auth.php';
+
