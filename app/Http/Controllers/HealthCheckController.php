@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ class HealthCheckController extends Controller
     /**
      * Basic health check
      */
-    public function health(): Response
+    public function health(): JsonResponse
     {
         $health = [
             'status' => 'healthy',

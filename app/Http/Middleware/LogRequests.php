@@ -29,7 +29,7 @@ class LogRequests
             'status' => $response->status(),
             'duration_ms' => round($duration, 2),
             'memory_kb' => round($memoryUsed / 1024, 2),
-            'user_id' => auth()->id(),
+            'user_id' => $request->user()?->id,
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);

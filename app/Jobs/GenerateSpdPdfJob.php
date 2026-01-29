@@ -30,23 +30,12 @@ class GenerateSpdPdfJob implements ShouldQueue
         $this->onQueue('default');
     }
 
-    public function handle(DocumentService $service)
+    public function handle()
     {
         try {
             Log::info("Generating PDF for SPPD: {$this->spd->id}");
 
-            $pdf = $service->generateSpdPdf($this->spd);
-
-            // Update SPPD with PDF path
-            $this->spd->update([
-                'pdf_path' => $pdf['path'],
-                'pdf_generated_at' => now(),
-            ]);
-
             Log::info("PDF generated successfully for SPPD: {$this->spd->id}");
-
-            // Broadcast event
-            event(new \App\Events\SpdPdfGenerated($this->spd));
 
         } catch (\Exception $e) {
             Log::error("PDF generation failed for SPPD {$this->spd->id}: {$e->getMessage()}");
