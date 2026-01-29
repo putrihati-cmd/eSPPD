@@ -422,7 +422,8 @@ class SppdController extends Controller
     public function exportPdf(Request $request, Spd $spd): JsonResponse
     {
         // Queue a PDF generation job
-        \App\Jobs\GenerateSpdPdfJob::dispatch($spd, auth()->user());
+        $user = $request->user();
+        \App\Jobs\GenerateSpdPdfJob::dispatch($spd, $user);
 
         return response()->json([
             'success' => true,
