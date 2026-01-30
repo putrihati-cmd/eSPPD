@@ -52,9 +52,8 @@ class ImportDosen extends Command
             );
 
             if (count($import->getFailed()) > 0) {
-                if ($this->confirm('Show failed details?')) {
-                    $this->table(['Row', 'NIP', 'Error'], $import->getFailed());
-                }
+                $this->warn('Failed details:');
+                $this->table(['Row', 'NIP', 'Error'], $import->getFailed());
             }
 
             $this->info('Import completed successfully!');
