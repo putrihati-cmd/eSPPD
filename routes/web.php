@@ -182,12 +182,24 @@ Route::middleware(['auth', 'role:bendahara,admin'])->prefix('finance')->name('fi
 // ADMIN USER MANAGEMENT (from lupa.md)
 // ============================================
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Livewire\Admin\UserManagement;
+use App\Livewire\Admin\RoleManagement;
+use App\Livewire\Admin\OrganizationManagement;
+use App\Livewire\Admin\DelegationManagement;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // User management - Gate check is inside controller
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
     Route::patch('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
     Route::get('/users/{user}/detail', [UserManagementController::class, 'show'])->name('users.show');
+
+    // New Admin Livewire Components (Level >= 98)
+    Route::middleware('role.level:98')->group(function () {
+        Route::get('/user-management', UserManagement::class)->name('user-management');
+        Route::get('/role-management', RoleManagement::class)->name('role-management');
+        Route::get('/organization-management', OrganizationManagement::class)->name('organization-management');
+        Route::get('/delegation-management', DelegationManagement::class)->name('delegation-management');
+    });
 });
 
 require __DIR__.'/auth.php';
