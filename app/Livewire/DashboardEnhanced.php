@@ -1,12 +1,16 @@
 <?php
 
-use Livewire\Volt\Component;
+namespace App\Livewire;
+
+use Livewire\Component;
 use App\Models\Spd;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Livewire\Attributes\On;
 
-new class extends Component {
+class DashboardEnhanced extends Component
+{
     public $totalSpdThisMonth = 0;
     public $pendingApproval = 0;
     public $approvedSpd = 0;
@@ -101,9 +105,8 @@ new class extends Component {
         };
     }
 
-    public function render()
+    public function render(): \Illuminate\View\View
     {
         return view('livewire.dashboard-enhanced');
     }
-};
-?>
+}
