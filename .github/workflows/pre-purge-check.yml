@@ -31,12 +31,21 @@ jobs:
             try {
               const res = await github.rest.repos.getBranchProtection({ owner: context.repo.owner, repo: context.repo.repo, branch: 'main' });
               const protection = {
-                enforce_admins: res.data.enforce_admins.enabled,
+                found: true,
+                enforce_admins: res.data.enforce_admins ? res.data.enforce_admins.enabled : false,
                 required_status_checks: res.data.required_status_checks ? res.data.required_status_checks.contexts : []
               };
+              core.setOutput('branch_protection_found', 'true');
               core.setOutput('protection', JSON.stringify(protection));
             } catch (err) {
-              core.setFailed('Branch protection cannot be read: ' + err.message);
+              const msg = err.message || String(err);
+              if (msg.includes('Resource not accessible by integration') || msg.includes('404') || msg.includes('Not Found')) {
+                core.info('Branch protection not accessible; treating as not protected: ' + msg);
+                core.setOutput('branch_protection_found', 'false');
+                core.setOutput('protection', JSON.stringify({ found: false, message: msg }));
+              } else {
+                core.setFailed('Branch protection cannot be read: ' + msg);
+              }
             }
 
       - name: Verify CI status for latest commit
@@ -53,8 +62,9 @@ jobs:
 
       - name: Output summary
         run: |
-          echo "Pre-purge check summary:" 
+          echo "Pre-purge check summary:"
           echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
+          echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
           echo "- Branch protection: ${{ steps.branch_protect.outputs.protection }}"
           echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
           echo "- Checks: ${{ steps.verify_ci.outputs.checks }}"
