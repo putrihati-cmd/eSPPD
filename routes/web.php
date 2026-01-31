@@ -4,6 +4,7 @@ use App\Livewire\Approvals\ApprovalIndex;
 use App\Livewire\Approvals\ApprovalQueue;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\Dashboard;
+use App\Livewire\DashboardEnhanced;
 use App\Livewire\Employees\EmployeeIndex;
 use App\Livewire\Excel\ExcelManager;
 use App\Livewire\Reports\ReportBuilder;
@@ -23,8 +24,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Dashboard
-Route::get('dashboard', Dashboard::class)
+// Dashboard (Enhanced)
+Route::get('dashboard', DashboardEnhanced::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
