@@ -49,243 +49,272 @@ new #[Layout('layouts.guest')] class extends Component {
     }
 }; ?>
 
-<div class="min-h-screen flex flex-col lg:flex-row bg-[#009CA6] relative overflow-hidden font-['Inter']">
+<div>
+    <style>
+        .login-vignette {
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
 
-    <!-- Islamic Pattern Overlay -->
-    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none"
-        style="background-image: url('https://mgx-backend-cdn.metadl.com/generate/images/938208/2026-01-29/87c6499f-dd64-42de-9c7b-3b5ebcf08f74.png'); background-size: cover; background-position: center;">
-    </div>
+        .particle {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(1px);
+            pointer-events: none;
+        }
 
-    <!-- Hero Content (Left) -->
-    <div class="hidden lg:flex flex-1 flex-col justify-center px-16 xl:px-24 z-10 text-white">
-        <div class="max-w-2xl">
-            <!-- Badge -->
-            <span
-                class="inline-block px-3 py-1 rounded-full bg-[#D4E157] text-[#1A1A1A] text-xs font-bold mb-8 uppercase tracking-widest">
-                UIN SAIZU Purwokerto
-            </span>
+        @keyframes login-float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
 
-            <!-- Main Title -->
-            <h1 class="text-[56px] font-extrabold leading-[1.1] tracking-tight mb-6">
-                Sistem Informasi <br />
-                <span class="text-[#D4E157]">Perjalanan Dinas</span>
-            </h1>
+            50% {
+                opacity: 0.6;
+            }
 
-            <!-- Description -->
-            <p class="text-[18px] text-white/90 font-medium max-w-xl leading-relaxed mb-10">
-                Efisiensi Pengajuan dan Pelaporan Perjalanan Dinas UIN Saizu Purwokerto dengan sistem digital yang
-                modern dan terintegrasi
-            </p>
+            100% {
+                transform: translateY(-100vh) translateX(40px);
+                opacity: 0;
+            }
+        }
 
-            <!-- Buttons -->
-            <div class="flex items-center gap-4 mb-16">
-                <a href="#"
-                    class="h-[48px] inline-flex items-center px-8 rounded-lg bg-[#D4E157] text-[#1A1A1A] font-bold text-sm shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5">
-                    Pelajari Lebih Lanjut
-                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                </a>
-                <a href="#"
-                    class="h-[48px] inline-flex items-center px-8 rounded-lg border-2 border-white text-white font-bold text-sm hover:bg-white/10 transition-colors">
-                    Panduan Pengguna
-                </a>
+        .animate-login-float {
+            animation: login-float linear infinite;
+        }
+
+        @keyframes fade-in-up {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-fade-in {
+            animation: fade-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+
+    <div
+        class="min-h-screen flex flex-col lg:flex-row bg-brand-teal relative overflow-hidden font-sans selection:bg-brand-lime selection:text-black">
+
+        <!-- Background Decor -->
+        <div class="absolute inset-0 z-0">
+            <!-- Gradient Base -->
+            <div class="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand-teal to-brand-dark"></div>
+
+            <!-- Pattern -->
+            <div class="absolute inset-0 opacity-10 mix-blend-overlay"
+                style="background-image: url('https://mgx-backend-cdn.metadl.com/generate/images/938208/2026-01-29/87c6499f-dd64-42de-9c7b-3b5ebcf08f74.png'); background-size: cover; background-position: center;">
             </div>
 
-            <!-- Stats Section -->
-            <div class="flex items-start gap-12 border-t border-white/20 pt-8">
-                <div>
-                    <p class="text-[32px] font-bold text-[#D4E157] leading-none">500+</p>
-                    <p class="text-sm text-white/80 mt-2 font-medium">Perjalanan Dinas</p>
+            <!-- Global Vignette -->
+            <div class="absolute inset-0 login-vignette"></div>
+
+            <!-- Floating Particles -->
+            @for ($i = 0; $i < 15; $i++)
+                <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: {{ rand(4, 10) }}px; height: {{ rand(4, 10) }}px; 
+                            left: {{ rand(5, 95) }}%; top: {{ rand(5, 95) }}%; 
+                            animation-duration: {{ rand(15, 25) }}s;
+                            animation-delay: {{ rand(0, 15) }}s;">
                 </div>
-                <div>
-                    <p class="text-[32px] font-bold text-[#D4E157] leading-none">50+</p>
-                    <p class="text-sm text-white/80 mt-2 font-medium">Dosen & Staff</p>
+            @endfor
+        </div>
+
+        <!-- Left Content (Hero) -->
+        <div class="hidden lg:flex flex-[1.2] flex-col justify-center px-24 xl:px-32 z-10 text-white">
+            <div class="max-w-xl animate-fade-in-up">
+                <div
+                    class="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-brand-lime text-xs font-bold mb-8 uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-lime mr-2 animate-pulse"></span>
+                    UIN SAIZU Purwokerto
                 </div>
-                <div>
-                    <p class="text-[32px] font-bold text-[#D4E157] leading-none">99%</p>
-                    <p class="text-sm text-white/80 mt-2 font-medium">Kepuasan</p>
+
+                <h1 class="text-6xl font-black leading-[1.05] tracking-tight mb-8">
+                    Sistem Informasi <br />
+                    <span class="text-brand-lime drop-shadow-sm">Perjalanan Dinas</span>
+                </h1>
+
+                <div class="h-1.5 w-24 bg-brand-lime mb-10 rounded-full"></div>
+
+                <p class="text-xl text-white/90 font-medium leading-relaxed mb-12">
+                    Transformasi digital pengajuan dan pelaporan perjalanan dinas di lingkungan UIN SAIZU yang lebih
+                    efisien, transparan, dan akuntabel.
+                </p>
+
+                <div class="flex items-center gap-6 mb-20">
+                    <a href="/about"
+                        class="h-14 px-10 rounded-2xl bg-brand-lime text-black font-bold flex items-center shadow-lg hover:shadow-brand-lime/30 transition-all hover:-translate-y-1 active:scale-95">
+                        Pelajari Lebih Lanjut
+                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                    <a href="/guide"
+                        class="h-14 px-10 rounded-2xl border-2 border-white/30 text-white font-bold flex items-center hover:bg-white/10 transition-all active:scale-95">
+                        Panduan Pengguna
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-8 border-t border-white/10 pt-10">
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">500+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">
+                            Perjalanan<br />Dinas</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">50+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">Dosen
+                            &<br />Staff</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">99%</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">
+                            Tingkat<br />Kepuasan</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Login Area (Right) -->
-    <div class="flex-1 flex items-center justify-center p-6 lg:p-12 z-20">
-        <div class="w-full max-w-[480px]">
-            <!-- Main Card -->
-            <div class="bg-white rounded-2xl shadow-2xl p-10 py-14 relative overflow-hidden">
-                <!-- Decorative Elements -->
-                <div class="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[#009CA6]/5 to-transparent rounded-full -mr-20 -mt-20"></div>
-                <div class="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-[#D4E157]/5 to-transparent rounded-full -ml-16 -mb-16"></div>
+        <!-- Right Content (Login Card) -->
+        <div class="flex-1 flex items-center justify-center p-6 lg:p-12 z-20">
+            <div class="w-full max-w-md animate-fade-in">
+                <div
+                    class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-atoms-card p-10 lg:p-14 relative overflow-hidden border border-white/20">
 
-                <!-- Header -->
-                <div class="relative text-center mb-12">
-                    <div class="mb-6 flex justify-center">
-                        <div class="relative">
-                            <div class="absolute inset-0 bg-gradient-to-br from-[#009CA6] to-[#007A82] blur-lg opacity-30 rounded-full"></div>
-                            <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="relative h-20 w-auto">
-                        </div>
-                    </div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Login e-SPPD</h2>
-                    <p class="text-gray-500 text-sm">Masuk ke sistem perjalanan dinas</p>
-                </div>
+                    <!-- Internal glows -->
+                    <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-teal/10 blur-[80px] rounded-full"></div>
+                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-lime/10 blur-[80px] rounded-full"></div>
 
-                <!-- Session Status -->
-                <x-auth-session-status class="mb-6" :status="session('status')" />
-
-                <!-- Form -->
-                <form wire:submit="login" class="space-y-5 relative">
-                    <!-- NIP/Username -->
-                    <div class="group">
-                        <label for="nip" class="block text-sm font-semibold text-gray-700 mb-2.5">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-1.5 text-[#009CA6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                                Username / NIP
-                            </span>
-                        </label>
-                        <div class="relative">
-                            <input wire:model="nip" id="nip"
-                                class="block w-full h-12 px-4 pl-12 bg-white border-2 border-gray-200 text-gray-900 text-sm rounded-lg focus:outline-none focus:border-[#009CA6] focus:ring-2 focus:ring-[#009CA6]/20 transition-all duration-200 placeholder:text-gray-400"
-                                type="text" name="nip" required autofocus autocomplete="username"
-                                placeholder="Masukkan NIP atau username" />
-                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[#009CA6] opacity-0 group-focus-within:opacity-100 transition-opacity">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
-                                </svg>
+                    <!-- Header -->
+                    <div class="relative text-center mb-12">
+                        <div class="mb-8 flex justify-center">
+                            <div class="relative inline-block">
+                                <div class="absolute inset-x-0 bottom-0 h-4 bg-brand-teal/20 blur-xl scale-125"></div>
+                                <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="relative w-auto"
+                                    style="height: 96px; min-height: 96px; max-height: 96px;">
                             </div>
                         </div>
-                        @error('nip')
-                            <div class="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                                <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-sm text-red-700">{{ $message }}</span>
-                            </div>
-                        @enderror
+                        <div class="space-y-3">
+                            <h2 class="text-4xl font-black text-gray-900 tracking-tight">Login <span
+                                    class="text-brand-teal">e-SPPD</span></h2>
+                            <p class="text-gray-500 font-medium">Sistem Informasi Perjalanan Dinas</p>
+                        </div>
                     </div>
 
-                    <!-- Password -->
-                    <div class="group">
-                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2.5">
-                            <span class="flex items-center">
-                                <svg class="w-4 h-4 mr-1.5 text-[#009CA6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                                </svg>
-                                Password
-                            </span>
-                        </label>
-                        <div class="relative">
-                            <input wire:model="password" id="password"
-                                type="{{ $showPassword ? 'text' : 'password' }}"
-                                class="block w-full h-12 px-4 pl-12 pr-12 bg-white border-2 border-gray-200 text-gray-900 text-sm rounded-lg focus:outline-none focus:border-[#009CA6] focus:ring-2 focus:ring-[#009CA6]/20 transition-all duration-200 placeholder:text-gray-400"
-                                name="password" required autocomplete="current-password" placeholder="Masukkan password" />
-                            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[#009CA6] opacity-0 group-focus-within:opacity-100 transition-opacity">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>
-                                </svg>
-                            </div>
-                            <button type="button" wire:click="togglePasswordVisibility"
-                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#009CA6] transition-colors focus:outline-none">
-                                @if ($showPassword)
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                    <x-auth-session-status class="mb-6" :status="session('status')" />
+
+                    <form wire:submit="login" class="space-y-6 relative">
+                        <!-- NIP -->
+                        <div class="space-y-2">
+                            <label for="nip" class="text-sm font-bold text-gray-700 ml-1">Username / NIP</label>
+                            <div class="relative group">
+                                <input wire:model="nip" id="nip" type="text" name="nip" required autofocus
+                                    class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium"
+                                    placeholder="Masukkan NIP" />
+                                <div
+                                    class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
-                                @else
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"></path>
-                                        <path d="M15.171 13.576l1.474 1.474a1 1 0 001.414-1.414l-14-14a1 1 0 00-1.414 1.414l1.473 1.473A10.014 10.014 0 00.458 10c1.274 4.057 5.065 7 9.542 7 2.181 0 4.322-.665 6.171-1.576z"></path>
-                                    </svg>
-                                @endif
-                            </button>
+                                </div>
+                            </div>
+                            @error('nip')
+                                <p class="text-xs text-red-500 font-bold ml-1">{{ $message }}</p>
+                            @enderror
                         </div>
-                        @error('password')
-                            <div class="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                                <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                </svg>
-                                <span class="text-sm text-red-700">{{ $message }}</span>
+
+                        <!-- Password -->
+                        <div class="space-y-2">
+                            <label for="password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
+                            <div class="relative group">
+                                <input wire:model="password" id="password"
+                                    type="{{ $showPassword ? 'text' : 'password' }}" name="password" required
+                                    class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium"
+                                    placeholder="Masukkan password" />
+                                <div
+                                    class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <button type="button" wire:click="togglePasswordVisibility"
+                                    class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @if ($showPassword)
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                        @else
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        @endif
+                                    </svg>
+                                </button>
                             </div>
-                        @enderror
-                    </div>
+                        </div>
 
-                    <!-- Remember Me & Forgot Password -->
-                    <div class="flex items-center justify-between pt-2">
-                        <label for="remember" class="inline-flex items-center cursor-pointer group">
-                            <div class="relative">
-                                <input id="remember" type="checkbox" wire:model="remember"
-                                    class="sr-only peer">
-                                <div class="w-5 h-5 border-2 border-gray-300 rounded-md peer-checked:border-[#009CA6] peer-checked:bg-[#009CA6] transition-all duration-200 group-hover:border-[#009CA6]"></div>
-                                <svg class="absolute top-1 left-1 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                            </div>
-                            <span class="ml-2.5 text-sm text-gray-600 font-medium group-hover:text-gray-900 transition-colors">Ingat saya</span>
-                        </label>
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="checkbox" wire:model="remember"
+                                    class="w-5 h-5 rounded-lg border-gray-200 text-brand-teal focus:ring-brand-teal/20">
+                                <span
+                                    class="ml-3 text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Ingat
+                                    saya</span>
+                            </label>
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}"
+                                    class="text-sm font-bold text-brand-teal hover:underline decoration-2 underline-offset-4">Lupa
+                                    password?</a>
+                            @endif
+                        </div>
 
-                        @if (Route::has('password.request'))
-                            <a class="text-sm font-semibold text-[#009CA6] hover:text-[#007A82] hover:underline transition-colors"
-                                href="{{ route('password.request') }}">
-                                Lupa password?
-                            </a>
-                        @endif
-                    </div>
-
-                    <!-- Submit Button -->
-                    <div class="pt-4">
-                        <button type="submit"
-                            wire:loading.class="opacity-75 cursor-not-allowed"
-                            class="w-full flex justify-center items-center h-12 bg-gradient-to-r from-[#009CA6] to-[#007A82] text-white text-sm font-bold rounded-lg shadow-lg hover:shadow-xl hover:from-[#007A82] hover:to-[#005f69] transition-all duration-200 active:scale-95 relative overflow-hidden group">
-
-                            <span wire:loading.remove>
-                                <svg class="w-4 h-4 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                                Masuk
-                            </span>
-
-                            <span wire:loading class="flex items-center">
-                                <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Sedang masuk...
-                            </span>
-
-                            <!-- Shine Effect -->
-                            <div class="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors"></div>
+                        <button type="submit" wire:loading.attr="disabled"
+                            class="w-full h-14 bg-gradient-to-r from-brand-teal to-brand-dark text-white font-black rounded-2xl shadow-lg hover:shadow-brand-teal/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait">
+                            <span wire:loading.remove>Masuk ke Dashboard</span>
+                            <span wire:loading>Memproses...</span>
                         </button>
-                    </div>
+                    </form>
 
-                    <!-- Footer Link -->
-                    <div class="text-center pt-4">
-                        <p class="text-sm text-gray-600">
-                            Belum punya akun?
-                            <span class="text-[#009CA6] font-bold">Hubungi Admin</span>
+                    <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-3">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Terintegrasi dengan
                         </p>
+                        <div class="flex items-center gap-4 opacity-50 font-black text-sm text-gray-900">
+                            <span>UIN SAIZU</span>
+                            <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                            <span>PUSKOM</span>
+                        </div>
                     </div>
-                </form>
-
-                <!-- Footer Info -->
-                <div class="mt-8 pt-6 border-t border-gray-100">
-                    <p class="text-center text-xs text-gray-400">
-                        Sistem Informasi Perjalanan Dinas UIN SAIZU Purwokerto
-                    </p>
                 </div>
-            </div>
 
-            <!-- Support Link -->
-            <div class="text-center mt-6">
-                <a href="#" class="text-sm text-gray-500 hover:text-[#009CA6] transition-colors flex items-center justify-center gap-1.5">
-                    <span>Butuh bantuan?</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </a>
+                <div class="text-center mt-10">
+                    <p class="text-white/60 text-sm font-medium">Bantuan? <a href="#"
+                            class="text-brand-lime font-bold hover:underline">Hubungi Admin IT</a></p>
+                </div>
             </div>
         </div>
     </div>
