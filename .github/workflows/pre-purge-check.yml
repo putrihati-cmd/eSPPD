@@ -58,13 +58,15 @@ jobs:
             core.setOutput('commit_sha', sha);
             core.setOutput('checks', JSON.stringify(conclusions));
       - name: Output summary
+        if: always()
         run: |
-          echo "Pre-purge check summary:"
-          echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
-          echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
-          echo "- Branch protection: ${{ steps.branch_protect.outputs.protection }}"
-          echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
-          echo "- Checks: ${{ steps.verify_ci.outputs.checks }}"
+          set +e
+          echo "=== Pre-purge check summary ==="
+          echo "ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}" || echo "ADMIN_TOKEN_PRESENT=<error>"
+          echo "Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}" || echo "Branch protection found=<error>"
+          echo "Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}" || echo "Latest commit=<error>"
+          echo "Check runs count: $(echo '${{ steps.verify_ci.outputs.checks }}' | wc -c || echo '?')"
+          set -e
       - name: Create coordination issue (if none exists)
         uses: actions/github-script@v6
         with:
