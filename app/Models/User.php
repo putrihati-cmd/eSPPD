@@ -122,7 +122,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin' || 
+        return $this->role === 'admin' ||
                $this->roleModel?->isAdmin() ?? false;
     }
 
@@ -131,7 +131,7 @@ class User extends Authenticatable
      */
     public function isApprover(): bool
     {
-        return $this->role === 'approver' || 
+        return $this->role === 'approver' ||
                $this->role_level >= 2 ||
                $this->isAdmin();
     }

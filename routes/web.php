@@ -24,6 +24,11 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Test Routes & UI (Development only)
+Route::get('/test-routes', function () {
+    return view('test-routes');
+})->name('test-routes');
+
 // Dashboard (Enhanced)
 Route::get('dashboard', DashboardEnhanced::class)
     ->middleware(['auth', 'verified'])

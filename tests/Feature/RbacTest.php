@@ -23,7 +23,7 @@ class RbacTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        
+
         // Create roles
         $adminRole = Role::create(['name' => 'admin', 'label' => 'Admin', 'level' => 98]);
         $rektorRole = Role::create(['name' => 'rektor', 'label' => 'Rektor', 'level' => 6]);
@@ -33,10 +33,10 @@ class RbacTest extends TestCase
 
         // Create users
         $this->admin = User::factory()->create(['role_id' => $adminRole->id, 'role' => 'admin']);
-        $this->rektor = User::factory()->create(['role_id' => $rektorRole->id, 'role_level' => 6]);
-        $this->dekan = User::factory()->create(['role_id' => $dekanRole->id, 'role_level' => 4]);
-        $this->wadek = User::factory()->create(['role_id' => $wadekRole->id, 'role_level' => 3]);
-        $this->employee = User::factory()->create(['role_id' => $employeeRole->id, 'role_level' => 1]);
+        $this->rektor = User::factory()->create(['role_id' => $rektorRole->id, 'role' => 'rektor']);
+        $this->dekan = User::factory()->create(['role_id' => $dekanRole->id, 'role' => 'dekan']);
+        $this->wadek = User::factory()->create(['role_id' => $wadekRole->id, 'role' => 'wadek']);
+        $this->employee = User::factory()->create(['role_id' => $employeeRole->id, 'role' => 'employee']);
 
         // Create permissions
         Permission::create(['name' => 'spd.create', 'label' => 'Create SPD', 'category' => 'spd']);
@@ -51,10 +51,10 @@ class RbacTest extends TestCase
     public function test_admin_bypasses_all_checks(): void
     {
         $this->assertTrue($this->admin->isAdmin());
-        
+
         // Admin can approve any amount
         $this->assertTrue(RbacService::canApproveAmount($this->admin, 1000000000));
-        
+
         // Admin has all permissions
         $this->assertTrue(RbacService::userHasPermission($this->admin, 'spd.create'));
         $this->assertTrue(RbacService::userHasPermission($this->admin, 'approval.approve'));
@@ -86,12 +86,12 @@ class RbacTest extends TestCase
      */
     public function test_assign_permission_to_role(): void
     {
-        $wadekRole = $this->wadek->role;
+        $wadekRole = $this->wadek->roleModel;
         $spd_create_perm = Permission::where('name', 'spd.create')->first();
 
         // Assign permission
         RbacService::assignPermissionToRole($wadekRole, 'spd.create');
-        
+
         // Verify assignment
         $this->assertTrue($wadekRole->permissions()->where('id', $spd_create_perm->id)->exists());
         $this->assertTrue(RbacService::userHasPermission($this->wadek, 'spd.create'));
@@ -102,8 +102,8 @@ class RbacTest extends TestCase
      */
     public function test_revoke_permission_from_role(): void
     {
-        $wadekRole = $this->wadek->role;
-        
+        $wadekRole = $this->wadek->roleModel;
+
         // First assign
         RbacService::assignPermissionToRole($wadekRole, 'spd.create');
         $this->assertTrue(RbacService::userHasPermission($this->wadek, 'spd.create'));
@@ -146,7 +146,7 @@ class RbacTest extends TestCase
         ]);
 
         $this->assertTrue($delegation->isValid());
-        
+
         // Check it exists
         $this->assertDatabaseHas('approval_delegations', [
             'delegator_id' => $this->dekan->id,
@@ -200,7 +200,7 @@ class RbacTest extends TestCase
         ]);
 
         $active = ApprovalDelegation::getActiveDelegations($this->dekan);
-        
+
         $this->assertEquals(1, $active->count());
         $this->assertEquals($this->wadek->id, $active->first()->delegate_id);
     }
@@ -214,7 +214,7 @@ class RbacTest extends TestCase
         $this->assertEquals(3, $this->wadek->role_level);
         $this->assertEquals(4, $this->dekan->role_level);
         $this->assertEquals(6, $this->rektor->role_level);
-        
+
         // Min level checks
         $this->assertTrue($this->rektor->hasMinLevel(4));
         $this->assertTrue($this->dekan->hasMinLevel(4));

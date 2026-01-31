@@ -29,7 +29,7 @@ class RbacService
         }
 
         // Check role permissions
-        if ($user->role && $user->role->permissions()->where('name', $permission)->exists()) {
+        if ($user->roleModel && $user->roleModel->permissions()->where('name', $permission)->exists()) {
             return true;
         }
 
@@ -58,8 +58,8 @@ class RbacService
             return true;
         }
 
-        $limit = $user->role?->getApprovalLimit();
-        
+        $limit = $user->roleModel?->getApprovalLimit();
+
         // No limit = can approve any amount
         if ($limit === null) {
             return true;
@@ -78,8 +78,8 @@ class RbacService
         }
 
         $directPermissions = $user->permissions()->pluck('name');
-        $rolePermissions = $user->role?->permissions()->pluck('name') ?? collect([]);
-        
+        $rolePermissions = $user->roleModel?->permissions()->pluck('name') ?? collect([]);
+
         return $directPermissions->merge($rolePermissions)->unique();
     }
 

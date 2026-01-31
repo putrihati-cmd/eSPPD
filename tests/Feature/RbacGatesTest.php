@@ -19,14 +19,14 @@ class RbacGatesTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        
+
         $adminRole = Role::create(['name' => 'admin', 'label' => 'Admin', 'level' => 98]);
         $approverRole = Role::create(['name' => 'approver', 'label' => 'Approver', 'level' => 3]);
         $employeeRole = Role::create(['name' => 'employee', 'label' => 'Employee', 'level' => 1]);
 
         $this->admin = User::factory()->create(['role_id' => $adminRole->id, 'role' => 'admin']);
-        $this->approver = User::factory()->create(['role_id' => $approverRole->id, 'role_level' => 3]);
-        $this->employee = User::factory()->create(['role_id' => $employeeRole->id, 'role_level' => 1]);
+        $this->approver = User::factory()->create(['role_id' => $approverRole->id, 'role' => 'approver']);
+        $this->employee = User::factory()->create(['role_id' => $employeeRole->id, 'role' => 'employee']);
 
         // Create permissions
         Permission::create(['name' => 'spd.create', 'label' => 'Create SPD', 'category' => 'spd']);
@@ -108,7 +108,7 @@ class RbacGatesTest extends TestCase
     {
         // Create high-level user
         $dekanRole = Role::create(['name' => 'dekan', 'label' => 'Dekan', 'level' => 4]);
-        $dekan = User::factory()->create(['role_id' => $dekanRole->id, 'role_level' => 4]);
+        $dekan = User::factory()->create(['role_id' => $dekanRole->id, 'role' => 'dekan']);
 
         // Dekan can override
         $this->assertTrue($dekan->can('override-approval'));

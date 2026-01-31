@@ -45,7 +45,7 @@ class ApprovalDelegation extends Model
         }
 
         $now = now();
-        
+
         if ($this->valid_from > $now) {
             return false;
         }

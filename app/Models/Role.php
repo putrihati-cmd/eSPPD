@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Role Model - RBAC.md Implementation
- * 
+ *
  * Hierarchy Levels:
  * - 99: superadmin
  * - 98: admin
