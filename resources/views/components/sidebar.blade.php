@@ -29,8 +29,8 @@
             Dashboard
         </x-sidebar-link>
 
-        {{-- SPD MANAGEMENT: Employee & Admin --}}
-        @if (auth()->user()->hasRole('employee') || auth()->user()->isAdmin())
+        {{-- SPD MANAGEMENT --}}
+        @can('create-spd')
             <x-sidebar-link href="{{ route('spd.index') }}" :active="str_starts_with($currentRoute, 'spd.index')">
                 <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -48,10 +48,10 @@
                 </svg>
                 Buat SPPD Baru
             </x-sidebar-link>
-        @endif
+        @endcan
 
-        {{-- APPROVAL: Approver & Admin --}}
-        @if (auth()->user()->hasRole('approver') || auth()->user()->isAdmin())
+        {{-- APPROVAL --}}
+        @can('approve-spd')
             <x-sidebar-link href="{{ route('approvals.index') }}" :active="str_starts_with($currentRoute, 'approvals.')">
                 <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -69,10 +69,10 @@
                     </span>
                 @endif
             </x-sidebar-link>
-        @endif
+        @endcan
 
-        {{-- REPORTS: Employee & Admin --}}
-        @if (auth()->user()->hasRole('employee') || auth()->user()->isAdmin())
+        {{-- REPORTS --}}
+        @can('create-report')
             <x-sidebar-link href="{{ route('reports.index') }}" :active="str_starts_with($currentRoute, 'reports.')">
                 <svg class="w-5 h-5" width="20" height="20" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -81,10 +81,10 @@
                 </svg>
                 Laporan
             </x-sidebar-link>
-        @endif
+        @endcan
 
         {{-- ADMIN ONLY --}}
-        @if (auth()->user()->isAdmin())
+        @can('admin-manage-users')
             <div class="pt-6 mt-2">
                 <p class="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Administrasi</p>
 
@@ -126,7 +126,7 @@
                     Manajemen User
                 </x-sidebar-link>
             </div>
-        @endif
+        @endcan
     </nav>
 
     <!-- User Profile -->
