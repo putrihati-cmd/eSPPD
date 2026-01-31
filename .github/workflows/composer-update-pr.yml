@@ -51,6 +51,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.changes.outputs.changed == 'true'
+        id: create_pr
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -64,6 +65,40 @@ jobs:
             - Tests were run during the job.
           labels: automated, dependencies
           base: main
+
+      - name: Find PR number
+        if: steps.changes.outputs.changed == 'true'
+        id: find_pr
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const head = `${context.repo.owner}:chore/deps/composer-update-${process.env.GITHUB_RUN_ID}`;
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head,
+              state: 'open'
+            });
+            if (!prs || prs.length === 0) throw new Error(`PR not found for head ${head}`);
+            core.setOutput('pr_number', prs[0].number);
+
+      - name: Enable auto-merge on PR
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.find_pr.outputs.pr_number }}');
+            try {
+              await github.request('PUT /repos/{owner}/{repo}/pulls/{pull_number}/enable-auto-merge', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'squash'
+              });
+              core.info(`Enabled auto-merge for PR #${prNumber}`);
+            } catch (err) {
+              core.warning(`Failed to enable auto-merge: ${err.message}`);
+            }
 
       - name: No changes detected
         if: steps.changes.outputs.changed == 'false'
