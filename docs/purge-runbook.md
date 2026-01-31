@@ -1,57 +1,101 @@
-# Purge Runbook — Remove document-service/venv from history
+# PURGE document-service/venv FROM HISTORY
+# ⚠️ WARNING: ONE-TIME EXECUTION - NO ROLLBACK POSSIBLE
+# ⚠️ All collaborators MUST re-clone after this
+# ⚠️ Force-push will rewrite history - irreversible
+# ⚠️ Backup tag created automatically (can revert to this if needed)
 
-Purpose
-- Provide a clear, repeatable checklist and communication plan before running the irreversible history rewrite that removes `document-service/venv`.
+# ============================================
+# STEP 1: BACKUP REPO (DI PC1)
+# ============================================
+cd ~/eSPPD
+git tag backup-before-purge-$(date +%Y%m%d-%H%M%S)
+git push origin --tags
+# Verify:
+git tag | grep backup-before-purge
 
-Prerequisites (must be completed before dispatch):
-1. All CI and Full repository checks on `main` are green.
-2. `ADMIN_TOKEN` repo secret exists and is a fine-grained PAT with repo:contents & actions permissions (already set as `ADMIN_TOKEN`).
-3. Backup plan agreed: the purge workflow creates a backup tag `backup/pre-history-rewrite-YYYYMMDD-HHMMSS` and pushes it — ensure team knows how to find and restore if necessary.
-4. Team coordination: announce on Slack/Teams + create an issue using the `Purge history` issue template for people to acknowledge.
-5. Avoid any pushes during the rewrite window.
+# ============================================
+# STEP 2: PURGE VENV DARI HISTORY
+# ============================================
+pip install git-filter-repo
+git filter-repo --path document-service/venv --invert-paths --force
 
-Checklist — pre-run
-- [ ] Open a coordination issue (use `.github/ISSUE_TEMPLATE/purge-history.md`) and assign required approvers.
-- [ ] Confirm `ADMIN_TOKEN` secret is set and accessible to Actions.
-- [ ] Ensure all contributors are informed and will not push during the operation.
-- [ ] Confirm backup tag strategy and verify available remote disk & permissions.
-- [ ] Team agrees on a time window to perform the rewrite.
+# ============================================
+# STEP 3: FORCE PUSH (IRREVERSIBLE)
+# ============================================
+git push origin --force --all
+git push origin --force --tags
 
-How to run (manual UI)
-1. Go to GitHub → Actions → **Purge document-service/venv from history**.
-2. Click **Run workflow** → select `main` → Set input `confirm` = `CONFIRM` → Run workflow.
+# ============================================
+# STEP 4: VERIFY
+# ============================================
+git log --all --full-history -- document-service/venv
+# MUST be empty - if shows results, something went wrong
 
-How to run (PowerShell)
-- Use a PAT with Actions dispatch permission and run (the command will prompt for PAT):
-```powershell
-$token = Read-Host -AsSecureString "Masukkan GitHub PAT (Actions/workflow dispatch permission)"
-$plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($token))
-Invoke-RestMethod -Method POST -Uri "https://api.github.com/repos/${{ github.repository }}/actions/workflows/purge-venv-history.yml/dispatches" -Headers @{ Authorization = "token $plain"; "User-Agent" = "purge-dispatch" } -Body (@{ ref = "main"; inputs = @{ confirm = "CONFIRM" } } | ConvertTo-Json)
-```
+ls -la document-service/ | grep venv
+# MUST be empty - if venv folder exists, purge failed
 
-Verification (during/after run)
-- Confirm backup tag `backup/pre-history-rewrite-*` exists in repository tags.
-- Verify the run logs show `document-service/venv removal verified` in the `Verify removal` step.
-- Confirm the force-push step completed successfully (`git push --force --all` and `git push --force --tags`).
-- Watch for the issue created by the workflow to report completion.
+# ============================================
+# SETUP SSH - PC1
+# ============================================
+ssh-keygen -t ed25519 -C "pc1@espdd"
+# Enter 3x (no passphrase)
+cat ~/.ssh/id_ed25519.pub
+# Copy output, paste ke GitHub Settings > SSH Keys
 
-Post-purge steps (must be performed by all contributors)
-1. Re-clone repository: `git clone https://github.com/<org>/<repo>.git` (old clones will have the old history and will cause confusion).
-2. Rotate secrets and PATs if any previously exposed secret tokens might exist in history. Also rotate any tokens that were exposed earlier (if you found any credentials during audit).
-3. Verify any downstream CI or deployment configs that rely on SHA references and update as necessary.
+git remote set-url origin git@github.com:putrihati-cmd/eSPPD.git
 
-Rollback plan
-- If a problem occurs, we have backup tags `backup/pre-history-rewrite-*` — use git or a mirror to restore the repository to the state pre-rewrite (contact repo admin for manual restore).
+# ============================================
+# SETUP SSH - PC2
+# ============================================
+ssh-keygen -t ed25519 -C "pc2@espdd"
+cat ~/.ssh/id_ed25519.pub
+# Copy output, paste ke GitHub Settings > SSH Keys (key baru)
 
-Communication templates
-- Announcement pre-purge (Slack):
-> We will run a repository history rewrite to remove `document-service/venv` on <date/time UTC>. DO NOT push during the operation. A backup tag will be created and pushed. After completion, please re-clone the repository and rotate secrets.
+git clone git@github.com:putrihati-cmd/eSPPD.git
+cd eSPPD
 
-- Completion message (automated by workflow will open an issue): check the issue for the backup tag name and follow the post-purge steps.
+# ============================================
+# WORKFLOW NOT NEEDED - USE MANUAL STEPS
+# ============================================
+# Manual execution gives you full control & visibility
+# Workflows can timeout/fail - manual is more reliable
 
-Contact / Owners
-- Repository admins: @putrihati-cmd
-- On-call engineer: <add names here>
 
-Notes
-- This runbook is a living document; update it if steps change.
+# ============================================
+# POST-PURGE CHECKLIST
+# ============================================
+
+# 1. Verify backup tag created
+git tag | grep backup-before-purge
+# Expected: backup-before-purge-YYYYMMDD-HHMMSS
+
+# 2. Verify venv removed from history
+git log --all --full-history -- document-service/venv | wc -l
+# Expected: 0 (completely empty)
+
+# 3. Verify folder gone
+ls -la document-service/ | grep venv
+# Expected: no output (folder doesn't exist)
+
+# 4. Check repo size reduced
+git count-objects -v
+
+# 5. PC2: Fresh clone
+cd ~/temp && git clone git@github.com:putrihati-cmd/eSPPD.git eSPPD-test
+cd eSPPD-test && git log --oneline | head -3
+
+# 6. PC1 <-> PC2 test
+# PC1: Create & push
+echo "test" > TEST.txt
+git add TEST.txt
+git commit -m "test sync"
+git push origin main
+
+# PC2: Pull
+git pull origin main
+ls TEST.txt  # Should exist
+
+# ✅ ALL PASSED = PURGE SUCCESSFUL
+git pull
+
+# DONE
