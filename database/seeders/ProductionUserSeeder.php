@@ -32,6 +32,7 @@ class ProductionUserSeeder extends Seeder
         $accounts = [
             [
                 'name' => 'Admin e-SPPD',
+                'nip' => '194508170000000000',
                 'email' => 'admin@infiatin.cloud',
                 'password' => 'Admin@eSPPD2026',
                 'role_id' => $adminRoleId,
@@ -39,6 +40,7 @@ class ProductionUserSeeder extends Seeder
             ],
             [
                 'name' => 'Iwan Setiawan',
+                'nip' => '197505051999031001',
                 'email' => 'iwan.setiawan@esppd.id',
                 'password' => 'Testing@123',
                 'role_id' => $employeeRoleId,
@@ -46,6 +48,7 @@ class ProductionUserSeeder extends Seeder
             ],
             [
                 'name' => 'Siti Nurhaliza',
+                'nip' => '196712151994031002',
                 'email' => 'siti.nurhaliza@esppd.id',
                 'password' => 'Testing@123',
                 'role_id' => $employeeRoleId,
@@ -53,6 +56,7 @@ class ProductionUserSeeder extends Seeder
             ],
             [
                 'name' => 'Bambang Sutrisno',
+                'nip' => '196803201990031003',
                 'email' => 'bambang.sutrisno@esppd.id',
                 'password' => 'Testing@123',
                 'role_id' => $kaprodiRoleId,
@@ -60,6 +64,7 @@ class ProductionUserSeeder extends Seeder
             ],
             [
                 'name' => 'Maftuh Asnawi',
+                'nip' => '195811081988031004',
                 'email' => 'maftuh.asnawi@esppd.id',
                 'password' => 'Testing@123',
                 'role_id' => $wadekRoleId,
@@ -67,6 +72,7 @@ class ProductionUserSeeder extends Seeder
             ],
             [
                 'name' => 'Suwito (Dekan)',
+                'nip' => '195508151985031005',
                 'email' => 'suwito.dekan@esppd.id',
                 'password' => 'Testing@123',
                 'role_id' => $dekanRoleId,
@@ -76,9 +82,10 @@ class ProductionUserSeeder extends Seeder
 
         foreach ($accounts as $account) {
             User::updateOrCreate(
-                ['email' => $account['email']],
+                ['nip' => $account['nip']],
                 [
                     'name' => $account['name'],
+                    'email' => $account['email'],
                     'email_verified_at' => now(),
                     'password' => Hash::make($account['password']),
                     'role_id' => $account['role_id'],
@@ -88,9 +95,12 @@ class ProductionUserSeeder extends Seeder
         }
 
         echo "\n✅ Production users created:\n";
-        echo "  Admin:   admin@infiatin.cloud / Admin@eSPPD2026\n";
-        echo "  Dosen:   iwan.setiawan@esppd.id / Testing@123\n";
-        echo "  Pegawai: siti.nurhaliza@esppd.id / Testing@123\n";
+        echo "  Admin:   NIP 194508170000000000 / Admin@eSPPD2026\n";
+        echo "  Dosen:   NIP 197505051999031001 / Testing@123\n";
+        echo "  Pegawai: NIP 196712151994031002 / Testing@123\n";
+        echo "  Kaprodi: NIP 196803201990031003 / Testing@123\n";
+        echo "  Wadek:   NIP 195811081988031004 / Testing@123\n";
+        echo "  Dekan:   NIP 195508151985031005 / Testing@123\n\n";
         echo "  Kaprodi: bambang.sutrisno@esppd.id / Testing@123\n";
         echo "  Wadek:   maftuh.asnawi@esppd.id / Testing@123\n";
         echo "  Dekan:   suwito.dekan@esppd.id / Testing@123\n\n";

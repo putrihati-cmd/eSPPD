@@ -22,13 +22,11 @@ new #[Layout('layouts.guest')] class extends Component {
         $this->isLoading = true;
 
         $this->validate([
-            'nip' => 'required|string',
+            'nip' => 'required|numeric',
             'password' => 'required|string',
         ]);
 
-        $emailToAuth = str_contains($this->nip, '@') ? $this->nip : $this->nip . '@uinsaizu.ac.id';
-
-        if (!Auth::attempt(['email' => $emailToAuth, 'password' => $this->password], $this->remember)) {
+        if (!Auth::attempt(['nip' => $this->nip, 'password' => $this->password], $this->remember)) {
             $this->isLoading = false;
             throw ValidationException::withMessages([
                 'nip' => 'NIP atau password salah.',
@@ -132,8 +130,8 @@ new #[Layout('layouts.guest')] class extends Component {
             <!-- Floating Particles -->
             @for ($i = 0; $i < 15; $i++)
                 <div class="particle bg-brand-lime/40 animate-login-float"
-                    style="width: {{ rand(4, 10) }}px; height: {{ rand(4, 10) }}px; 
-                            left: {{ rand(5, 95) }}%; top: {{ rand(5, 95) }}%; 
+                    style="width: {{ rand(4, 10) }}px; height: {{ rand(4, 10) }}px;
+                            left: {{ rand(5, 95) }}%; top: {{ rand(5, 95) }}%;
                             animation-duration: {{ rand(15, 25) }}s;
                             animation-delay: {{ rand(0, 15) }}s;">
                 </div>
