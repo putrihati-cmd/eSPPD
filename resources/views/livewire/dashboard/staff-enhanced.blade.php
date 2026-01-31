@@ -89,6 +89,12 @@
         </a>
     </div>
 
+    <!-- Charts Section -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <livewire:charts.spd-trend-chart />
+        <livewire:charts.spd-status-chart />
+    </div>
+
     <!-- Recent SPDs -->
     @if($recentSpds->count() > 0)
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
