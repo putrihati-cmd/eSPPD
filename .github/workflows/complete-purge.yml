@@ -1,0 +1,77 @@
+name: Complete History Purge & Force Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      proceed:
+        description: 'Confirm proceeding with force-push (type: PROCEED)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  complete-purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify confirmation
+        run: |
+          if [[ "${{ github.event.inputs.proceed }}" != "PROCEED" ]]; then
+            echo "❌ Confirmation input incorrect. Aborting."
+            exit 1
+          fi
+          echo "✅ Proceeding with force-push"
+
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install git-filter-repo
+        run: pip install git-filter-repo
+
+      - name: Create backup tag
+        run: |
+          git tag backup-before-purge-$(date +%Y%m%d-%H%M%S)
+          git push origin --tags
+          git tag | grep backup-before-purge
+
+      - name: Purge venv from history
+        run: |
+          echo "Removing document-service/venv from all history..."
+          git filter-repo --path document-service/venv --invert-paths --force
+          echo "✅ Purge complete"
+
+      - name: Verify removal
+        run: |
+          COUNT=$(git log --all --full-history -- document-service/venv | wc -l)
+          if [ $COUNT -gt 0 ]; then
+            echo "❌ ERROR: Venv still exists in history ($COUNT lines)"
+            exit 1
+          fi
+          echo "✅ Verified: Venv completely removed"
+
+      - name: Force push to main
+        run: |
+          git push origin --force --all
+          git push origin --force --tags
+          echo "✅ Force-push complete"
+
+      - name: Post-purge summary
+        run: |
+          echo "## History Purge Complete ✅"
+          echo ""
+          echo "- Backup tag: $(git tag | grep backup-before-purge | tail -1)"
+          echo "- Venv removed from all history"
+          echo "- Main branch force-pushed"
+          echo ""
+          echo "**Next steps for collaborators:**"
+          echo "1. Delete local repo: \`rm -rf ~/eSPPD\`"
+          echo "2. Fresh clone: \`git clone git@github.com:putrihati-cmd/eSPPD.git\`"
+          echo "3. Test sync between PCs"
