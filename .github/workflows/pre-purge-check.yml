@@ -1,0 +1,73 @@
+name: Pre-purge checklist
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pre-purge-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check ADMIN_TOKEN secret present
+        id: check_secret
+        run: |
+          if [ -z "${{ secrets.ADMIN_TOKEN }}" ]; then
+            echo "ADMIN_TOKEN_PRESENT=false" >> $GITHUB_OUTPUT
+            echo "ADMIN_TOKEN missing; set repo secret ADMIN_TOKEN with a fine-grained PAT that has appropriate repo scopes." >&2
+            exit 1
+          else
+            echo "ADMIN_TOKEN_PRESENT=true" >> $GITHUB_OUTPUT
+            echo "ADMIN_TOKEN present"
+          fi
+
+      - name: Check branch protection on main
+        id: branch_protect
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              const res = await github.rest.repos.getBranchProtection({ owner: context.repo.owner, repo: context.repo.repo, branch: 'main' });
+              const protection = {
+                enforce_admins: res.data.enforce_admins.enabled,
+                required_status_checks: res.data.required_status_checks ? res.data.required_status_checks.contexts : []
+              };
+              core.setOutput('protection', JSON.stringify(protection));
+            } catch (err) {
+              core.setFailed('Branch protection cannot be read: ' + err.message);
+            }
+
+      - name: Verify CI status for latest commit
+        id: verify_ci
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commit = (await github.rest.repos.listCommits({ owner: context.repo.owner, repo: context.repo.repo, per_page: 1 })).data[0];
+            const sha = commit.sha;
+            const checks = await github.rest.checks.listForRef({ owner: context.repo.owner, repo: context.repo.repo, ref: sha });
+            const conclusions = checks.data.check_runs.map(c => ({name: c.name, conclusion: c.conclusion}));
+            core.setOutput('commit_sha', sha);
+            core.setOutput('checks', JSON.stringify(conclusions));
+
+      - name: Output summary
+        run: |
+          echo "Pre-purge check summary:" 
+          echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
+          echo "- Branch protection: ${{ steps.branch_protect.outputs.protection }}"
+          echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
+          echo "- Checks: ${{ steps.verify_ci.outputs.checks }}"
+
+      - name: Create coordination issue (if none exists)
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: existing } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, labels: 'purge', state: 'open' });
+            if (existing && existing.length > 0) {
+              core.info(`Found ${existing.length} open purge issue(s), not creating a new one.`);
+            } else {
+              const body = `Pre-purge checks are complete. Please review the runbook at docs/purge-runbook.md and confirm readiness by commenting on this issue.`;
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title: 'Purge prep: ready to remove document-service/venv', body, labels: ['purge'] });
+              core.info('Created coordination issue with label purge.');
+            }
