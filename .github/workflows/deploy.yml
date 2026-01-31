@@ -1,0 +1,52 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚀 Deploy to Production Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: 192.168.1.27
+          username: tholib_server
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            cd /var/www/esppd
+
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            echo "📦 Installing dependencies..."
+            composer install --no-dev --optimize-autoloader
+
+            echo "🗄️  Running migrations..."
+            php artisan migrate --force
+
+            echo "⚙️  Caching configuration..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            echo "⚡ Optimizing..."
+            php artisan optimize
+
+            echo "✅ Deployment complete!"
+            echo "Application: https://esppd.infiatin.cloud"
+
+      - name: 📧 Notify Deployment Success
+        if: success()
+        run: |
+          echo "✅ Deployment successful to https://esppd.infiatin.cloud"
+
+      - name: 🚨 Notify Deployment Failed
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check logs for details."
