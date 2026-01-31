@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: github/codeql-action/init@v3
         with:
-          languages: ['php','javascript','python']
+          languages: 'php, javascript, python'
       - uses: github/codeql-action/analyze@v3
 
   secret-scan:
