@@ -5,6 +5,8 @@ use App\Livewire\Approvals\ApprovalQueue;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\Dashboard;
 use App\Livewire\DashboardEnhanced;
+use App\Livewire\Dashboard\ApprovalStatusPage;
+use App\Livewire\Dashboard\MyDelegationPage;
 use App\Livewire\Employees\EmployeeIndex;
 use App\Livewire\Excel\ExcelManager;
 use App\Livewire\Reports\ReportBuilder;
@@ -70,6 +72,12 @@ Route::middleware(['auth', 'role.level:1'])->prefix('reports')->name('reports.')
     Route::get('/trip-report/{report}', TripReportShow::class)->name('show');
     Route::get('/trip-report/{report}/edit', TripReportCreate::class)->name('edit');
     Route::get('/trip-report/{report}/download', [App\Http\Controllers\TripReportPdfController::class, 'download'])->name('download');
+});
+
+// Dashboard Pages (User Level)
+Route::middleware(['auth', 'role.level:1'])->group(function () {
+    Route::get('/dashboard/approval-status', ApprovalStatusPage::class)->name('dashboard.approval-status');
+    Route::get('/dashboard/my-delegations', MyDelegationPage::class)->name('dashboard.my-delegations');
 });
 
 // Employee Routes (Admin Level >= 98)
@@ -186,12 +194,28 @@ Route::middleware(['auth', 'role:bendahara,admin'])->prefix('finance')->name('fi
 // ADMIN USER MANAGEMENT (from lupa.md)
 // ============================================
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Livewire\Admin\UserManagement;
+use App\Livewire\Admin\RoleManagement;
+use App\Livewire\Admin\OrganizationManagement;
+use App\Livewire\Admin\DelegationManagement;
+use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\ActivityDashboard;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // User management - Gate check is inside controller
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
     Route::patch('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
     Route::get('/users/{user}/detail', [UserManagementController::class, 'show'])->name('users.show');
+
+    // New Admin Livewire Components (Level >= 98)
+    Route::middleware('role.level:98')->group(function () {
+        Route::get('/user-management', UserManagement::class)->name('user-management');
+        Route::get('/role-management', RoleManagement::class)->name('role-management');
+        Route::get('/organization-management', OrganizationManagement::class)->name('organization-management');
+        Route::get('/delegation-management', DelegationManagement::class)->name('delegation-management');
+        Route::get('/audit-logs', AuditLogViewer::class)->name('audit-logs');
+        Route::get('/activity-dashboard', ActivityDashboard::class)->name('activity-dashboard');
+    });
 });
 
 require __DIR__ . '/auth.php';
