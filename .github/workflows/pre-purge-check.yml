@@ -1,0 +1,87 @@
+name: Pre-purge checklist
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pre-purge-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check ADMIN_TOKEN secret present
+        id: check_secret
+        run: |
+          if [ -z "${{ secrets.ADMIN_TOKEN }}" ]; then
+            echo "ADMIN_TOKEN_PRESENT=false" >> $GITHUB_OUTPUT
+            echo "ADMIN_TOKEN missing; set repo secret ADMIN_TOKEN with a fine-grained PAT that has appropriate repo scopes." >&2
+            exit 1
+          else
+            echo "ADMIN_TOKEN_PRESENT=true" >> $GITHUB_OUTPUT
+            echo "ADMIN_TOKEN present"
+          fi
+
+      - name: Check branch protection on main
+        id: branch_protect
+        uses: actions/github-script@v6
+        with:
+          script: |
+            try {
+              const res = await github.rest.repos.getBranchProtection({ owner: context.repo.owner, repo: context.repo.repo, branch: 'main' });
+              const protection = {
+                found: true,
+                enforce_admins: res.data.enforce_admins ? res.data.enforce_admins.enabled : false,
+                required_status_checks: res.data.required_status_checks ? res.data.required_status_checks.contexts : []
+              };
+              core.setOutput('branch_protection_found', 'true');
+              core.setOutput('protection', JSON.stringify(protection));
+            } catch (err) {
+              const msg = err.message || String(err);
+              if (msg.includes('Resource not accessible by integration') || msg.includes('404') || msg.includes('Not Found')) {
+                core.info('Branch protection not accessible; treating as not protected: ' + msg);
+                core.setOutput('branch_protection_found', 'false');
+                core.setOutput('protection', JSON.stringify({ found: false, message: msg }));
+              } else {
+                core.setFailed('Branch protection cannot be read: ' + msg);
+              }
+            }
+
+      - name: Verify CI status for latest commit
+        id: verify_ci
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const commit = (await github.rest.repos.listCommits({ owner: context.repo.owner, repo: context.repo.repo, per_page: 1 })).data[0];
+            const sha = commit.sha;
+            const checks = await github.rest.checks.listForRef({ owner: context.repo.owner, repo: context.repo.repo, ref: sha });
+            const conclusions = checks.data.check_runs.map(c => ({name: c.name, conclusion: c.conclusion}));
+            core.setOutput('commit_sha', sha);
+            core.setOutput('checks', JSON.stringify(conclusions));
+
+      - name: Output summary
+        run: |
+          echo "Pre-purge check summary:"
+          echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
+          echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
+          echo "- Branch protection:"
+          protection_output="${{ steps.branch_protect.outputs.protection }}"
+          printf '%s\n' "$protection_output"
+          echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
+          echo "- Checks:"
+          checks_output="${{ steps.verify_ci.outputs.checks }}"
+          printf '%s\n' "$checks_output"
+
+      - name: Create coordination issue (if none exists)
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: existing } = await github.rest.issues.listForRepo({ owner: context.repo.owner, repo: context.repo.repo, labels: 'purge', state: 'open' });
+            if (existing && existing.length > 0) {
+              core.info(`Found ${existing.length} open purge issue(s), not creating a new one.`);
+            } else {
+              const body = `Pre-purge checks are complete. Please review the runbook at docs/purge-runbook.md and confirm readiness by commenting on this issue.`;
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title: 'Purge prep: ready to remove document-service/venv', body, labels: ['purge'] });
+              core.info('Created coordination issue with label purge.');
+            }

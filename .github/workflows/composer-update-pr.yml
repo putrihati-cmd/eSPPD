@@ -1,0 +1,105 @@
+name: Composer update and PR
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # weekly on Monday at 03:00 UTC
+
+jobs:
+  update-composer:
+    name: Update Composer and Create PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: mbstring,xml,ctype,bcmath,curl,gd,zip,pdo_mysql
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --no-interaction
+
+      - name: Run composer update
+        run: composer update --with-all-dependencies --no-interaction
+
+      - name: Run tests
+        run: composer ci
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add composer.lock composer.json || true
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/deps/composer-update-${{ github.run_id }}
+          commit-message: "chore(deps): composer update"
+          title: "chore(deps): composer update"
+          body: |
+            Automated composer update run on PHP 8.4.
+
+            - Updated by GitHub Actions.
+            - Tests were run during the job.
+          labels: automated, dependencies
+          base: main
+
+      - name: Find PR number
+        if: steps.changes.outputs.changed == 'true'
+        id: find_pr
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const head = `${context.repo.owner}:chore/deps/composer-update-${process.env.GITHUB_RUN_ID}`;
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head,
+              state: 'open'
+            });
+            if (!prs || prs.length === 0) throw new Error(`PR not found for head ${head}`);
+            core.setOutput('pr_number', prs[0].number);
+
+      - name: Enable auto-merge on PR
+        if: steps.changes.outputs.changed == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.find_pr.outputs.pr_number }}');
+            try {
+              await github.request('PUT /repos/{owner}/{repo}/pulls/{pull_number}/enable-auto-merge', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                merge_method: 'squash'
+              });
+              core.info(`Enabled auto-merge for PR #${prNumber}`);
+            } catch (err) {
+              core.warning(`Failed to enable auto-merge: ${err.message}`);
+            }
+
+      - name: No changes detected
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "No changes in composer.lock or composer.json; nothing to PR."
