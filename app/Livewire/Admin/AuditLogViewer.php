@@ -73,7 +73,7 @@ class AuditLogViewer extends Component
         $this->resetPage();
     }
 
-    public function export(): void
+    public function export()
     {
         $logs = $this->logs();
         $csv = "Waktu,User,Action,Entity,Entity ID,Perubahan\n";
