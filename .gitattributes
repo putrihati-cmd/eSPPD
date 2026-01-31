@@ -9,3 +9,14 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Mark binary formats to avoid text diff issues and scanning noise
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.docx binary
+*.pptx binary
+*.xlsx binary
+*.docx export-ignore

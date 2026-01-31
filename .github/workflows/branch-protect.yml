@@ -21,9 +21,11 @@ jobs:
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -d '{
-              "required_status_checks": {"strict": true, "contexts": ["Full repository checks", "CI"]},
-              "enforce_admins": false,
+              "required_status_checks": {"strict": true, "contexts": ["Full repository checks", "CI", "CodeQL analysis", "Secret scan (gitleaks - repo history)"]},
+              "enforce_admins": true,
               "required_pull_request_reviews": {"required_approving_review_count": 1, "dismiss_stale_reviews": true, "require_code_owner_reviews": true},
+              "required_linear_history": {"enabled": true},
+              "allow_force_pushes": false,
               "restrictions": null
             }' | jq .
       - name: Success
