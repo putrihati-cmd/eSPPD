@@ -22,9 +22,9 @@ test_connection() {
     TEST_COUNT=$((TEST_COUNT + 1))
     local name=$1
     local command=$2
-    
+
     echo -n "[$TEST_COUNT] Testing $name... "
-    
+
     if eval "$command" > /dev/null 2>&1; then
         echo -e "${GREEN}✅ PASS${NC}"
         PASS_COUNT=$((PASS_COUNT + 1))

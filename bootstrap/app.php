@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Force password change middleware (for first-time login)
+        $middleware->append(\App\Http\Middleware\CheckPasswordReset::class);
+
         // Security headers middleware
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 

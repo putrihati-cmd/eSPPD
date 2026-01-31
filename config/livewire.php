@@ -23,7 +23,7 @@ return [
     |
     */
 
-    'asset_url' => null,
+    'asset_url' => env('LIVEWIRE_ASSET_URL'),
 
     'class_namespace' => 'App\\Livewire',
 
@@ -126,7 +126,7 @@ return [
     |
     */
 
-    'inject_assets' => true,
+    'inject_assets' => false,
 
     /*
     |---------------------------------------------------------------------------
