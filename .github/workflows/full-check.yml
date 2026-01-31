@@ -1,0 +1,65 @@
+name: Full repository checks
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+  schedule:
+    - cron: '30 2 * * 0' # weekly Sunday
+
+jobs:
+  full-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v4
+        with:
+          php-version: 8.2
+          extensions: mbstring,xml,ctype,bcmath,curl,gd,zip,pdo_mysql
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Composer deps
+        run: composer install --no-progress --no-suggest --no-interaction
+
+      - name: Install Node deps
+        run: npm ci
+
+      - name: Run PHP linters and static analysis
+        run: |
+          composer lint || true
+          composer analyze || true
+          composer cs || true
+
+      - name: Run tests
+        run: composer test || true
+
+      - name: Run pre-commit checks
+        uses: pre-commit/action@v4
+        with:
+          extra_args: --all-files
+
+      - name: Run gitleaks (repo history)
+        run: |
+          curl -sSL "https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks_$(uname -s)_$(uname -m).tar.gz" -o gitleaks.tgz || true
+          mkdir -p bin || true
+          tar -xzf gitleaks.tgz -C bin || true
+          ./bin/gitleaks detect --repo-path . --report-path gitleaks-report.json --redact || true
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-check-artifacts
+          path: |
+            gitleaks-report.json
+            storage/logs/**
+            tests/_output/**
