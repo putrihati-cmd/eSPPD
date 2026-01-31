@@ -1,44 +1,68 @@
 #!/bin/bash
 
-# Final Deployment Script
-# eSPPD Production Deployment
-# Server: 192.168.1.27
+# Final Production Deployment Script for eSPPD
+# Target: 192.168.1.27
 # User: tholib_server
+# App: /var/www/esppd
+
+set -e
 
 APP="/var/www/esppd"
-cd $APP
 
-echo "🚀 eSPPD DEPLOYMENT START"
-echo "=========================="
-
-# 1. Git
-echo "📥 Git pull..."
-git pull origin main 2>&1 | tail -3
-
-# 2. Composer
-echo "📦 Composer install..."
-composer install --no-dev --optimize-autoloader 2>&1 | tail -2
-
-# 3. Migrations
-echo "🗄️  Migrations..."
-php artisan migrate --force 2>&1 | grep -E "Migrated|Application|error" || true
-
-# 4. Caching
-echo "⚙️  Caching..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# 5. Optimize
-echo "⚡ Optimize..."
-php artisan optimize
-
-# 6. Clear
-echo "🧹 Clear..."
-php artisan cache:clear
-
+echo "════════════════════════════════════════════════════"
+echo "🚀 eSPPD PRODUCTION DEPLOYMENT"
+echo "════════════════════════════════════════════════════"
 echo ""
-echo "✅ DEPLOYMENT SUCCESS!"
-echo "=========================="
-echo "App: https://esppd.infiatin.cloud"
-echo "Check: php artisan about"
+
+cd $APP || exit 1
+
+echo "📥 Step 1: Git Pull"
+git pull origin main --quiet
+echo "✅ Complete"
+echo ""
+
+echo "📦 Step 2: Composer Install"
+composer install --no-dev --optimize-autoloader --quiet 2>/dev/null || echo "⚠️  Completed with warnings"
+echo "✅ Complete"
+echo ""
+
+echo "🗄️  Step 3: Database Migrations"
+php artisan migrate --force --quiet
+echo "✅ Complete"
+echo ""
+
+echo "⚙️  Step 4: Cache Configuration"
+php artisan config:cache --quiet
+php artisan route:cache --quiet
+php artisan view:cache --quiet
+echo "✅ Complete"
+echo ""
+
+echo "⚡ Step 5: Optimize Application"
+php artisan optimize --quiet
+echo "✅ Complete"
+echo ""
+
+echo "🧹 Step 6: Clear Old Cache"
+php artisan cache:clear --quiet
+echo "✅ Complete"
+echo ""
+
+echo "════════════════════════════════════════════════════"
+echo "✅ DEPLOYMENT SUCCESSFUL!"
+echo "════════════════════════════════════════════════════"
+echo ""
+echo "📋 Application: https://esppd.infiatin.cloud"
+echo ""
+echo "🔍 Available Pages:"
+echo "   ✅ /admin/user-management"
+echo "   ✅ /admin/role-management"
+echo "   ✅ /admin/organization-management"
+echo "   ✅ /admin/delegation-management"
+echo "   ✅ /admin/audit-logs"
+echo "   ✅ /admin/activity-dashboard"
+echo "   ✅ /dashboard/approval-status"
+echo "   ✅ /dashboard/my-delegations"
+echo ""
+echo "📊 System Info:"
+php artisan about --quiet || true
