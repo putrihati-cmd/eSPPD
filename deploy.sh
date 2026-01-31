@@ -38,9 +38,12 @@ ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && composer install --no-dev --o
 echo "OK"
 echo ""
 
-# 4. Run migrations and cache
-echo "[4/5] Running migrations..."
+# 4. Run migrations and seed production users
+echo "[4/5] Running migrations and seeding data..."
 ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && php artisan migrate --force -q"
+ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && php artisan db:seed --class=RoleSeeder -q"
+ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && php artisan db:seed --class=PermissionSeeder -q"
+ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && php artisan db:seed --class=ProductionUserSeeder -q"
 ssh ${SERVER_USER}@${SERVER_IP} "cd ${APP_PATH} && php artisan config:cache && php artisan route:cache && php artisan view:cache"
 echo "OK"
 echo ""
