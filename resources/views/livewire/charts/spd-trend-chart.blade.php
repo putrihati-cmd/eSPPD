@@ -17,27 +17,27 @@
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm font-medium text-slate-700">{{ $label }}</span>
                 <span class="text-xs text-slate-500">
-                    ✓ {{ $chartData['approved'][$index] ?? 0 }} | 
-                    ⏳ {{ $chartData['pending'][$index] ?? 0 }} | 
+                    ✓ {{ $chartData['approved'][$index] ?? 0 }} |
+                    ⏳ {{ $chartData['pending'][$index] ?? 0 }} |
                     ✗ {{ $chartData['rejected'][$index] ?? 0 }}
                 </span>
             </div>
             <div class="flex gap-1 h-8">
                 <!-- Approved -->
                 @if(($chartData['approved'][$index] ?? 0) > 0)
-                <div class="flex-1 bg-emerald-500 rounded" style="width: {{ (($chartData['approved'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;" 
+                <div class="flex-1 bg-emerald-500 rounded" style="width: {{ (($chartData['approved'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;"
                     title="Approved: {{ $chartData['approved'][$index] ?? 0 }}"></div>
                 @endif
-                
+
                 <!-- Pending -->
                 @if(($chartData['pending'][$index] ?? 0) > 0)
-                <div class="flex-1 bg-orange-500 rounded" style="width: {{ (($chartData['pending'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;" 
+                <div class="flex-1 bg-orange-500 rounded" style="width: {{ (($chartData['pending'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;"
                     title="Pending: {{ $chartData['pending'][$index] ?? 0 }}"></div>
                 @endif
-                
+
                 <!-- Rejected -->
                 @if(($chartData['rejected'][$index] ?? 0) > 0)
-                <div class="flex-1 bg-red-500 rounded" style="width: {{ (($chartData['rejected'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;" 
+                <div class="flex-1 bg-red-500 rounded" style="width: {{ (($chartData['rejected'][$index] ?? 0) / $maxValue) * 100 }}%; min-width: 4px;"
                     title="Rejected: {{ $chartData['rejected'][$index] ?? 0 }}"></div>
                 @endif
             </div>

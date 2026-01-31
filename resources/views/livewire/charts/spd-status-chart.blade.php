@@ -22,7 +22,7 @@
             <div class="relative w-40 h-40">
                 <svg viewBox="0 0 100 100" class="w-full h-full transform -rotate-90">
                     @php $offset = 0; @endphp
-                    
+
                     @foreach(['approved', 'pending', 'rejected', 'draft'] as $status)
                     @php
                         $value = $statusData[$status];
@@ -32,8 +32,8 @@
                         $dashoffset = $circumference - (($percentage / 100) * $circumference);
                     @endphp
                     @if($value > 0)
-                    <circle cx="50" cy="50" r="45" 
-                        fill="none" 
+                    <circle cx="50" cy="50" r="45"
+                        fill="none"
                         class="transition-all duration-300"
                         @if($status === 'approved') stroke="#10b981"
                         @elseif($status === 'pending') stroke="#f97316"

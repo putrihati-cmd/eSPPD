@@ -73,14 +73,14 @@
 
     <!-- Quick Actions -->
     <div class="mb-6 flex gap-3">
-        <a href="{{ route('spds.create') ?? '#' }}" 
+        <a href="{{ route('spds.create') ?? '#' }}"
             class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             <span>Buat Pengajuan Baru</span>
         </a>
-        <a href="{{ route('spds.index') ?? '#' }}" 
+        <a href="{{ route('spds.index') ?? '#' }}"
             class="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
@@ -117,7 +117,7 @@
                         <td class="px-5 py-4 text-sm text-slate-900">{{ $spd->destination ?? '-' }}</td>
                         <td class="px-5 py-4 text-sm text-slate-600">{{ $spd->start_date?->translatedFormat('d M Y') ?? '-' }}</td>
                         <td class="px-5 py-4 text-sm">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
                                 @if($spd->status === 'approved') bg-emerald-100 text-emerald-800
                                 @elseif($spd->status === 'rejected') bg-red-100 text-red-800
                                 @elseif($spd->status === 'pending') bg-orange-100 text-orange-800
