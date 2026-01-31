@@ -1,0 +1,70 @@
+name: Composer update and PR
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1' # weekly on Monday at 03:00 UTC
+
+jobs:
+  update-composer:
+    name: Update Composer and Create PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: mbstring,xml,ctype,bcmath,curl,gd,zip,pdo_mysql
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest --no-interaction
+
+      - name: Run composer update
+        run: composer update --with-all-dependencies --no-interaction
+
+      - name: Run tests
+        run: composer ci
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add composer.lock composer.json || true
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: chore/deps/composer-update-${{ github.run_id }}
+          commit-message: "chore(deps): composer update"
+          title: "chore(deps): composer update"
+          body: |
+            Automated composer update run on PHP 8.4.
+
+            - Updated by GitHub Actions.
+            - Tests were run during the job.
+          labels: automated, dependencies
+          base: main
+
+      - name: No changes detected
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "No changes in composer.lock or composer.json; nothing to PR."
