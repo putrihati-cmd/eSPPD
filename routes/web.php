@@ -5,6 +5,8 @@ use App\Livewire\Approvals\ApprovalQueue;
 use App\Livewire\Budgets\BudgetIndex;
 use App\Livewire\Dashboard;
 use App\Livewire\DashboardEnhanced;
+use App\Livewire\Dashboard\ApprovalStatusPage;
+use App\Livewire\Dashboard\MyDelegationPage;
 use App\Livewire\Employees\EmployeeIndex;
 use App\Livewire\Excel\ExcelManager;
 use App\Livewire\Reports\ReportBuilder;
@@ -66,6 +68,12 @@ Route::middleware(['auth', 'role.level:1'])->prefix('reports')->name('reports.')
     Route::get('/trip-report/{report}', TripReportShow::class)->name('show');
     Route::get('/trip-report/{report}/edit', TripReportCreate::class)->name('edit');
     Route::get('/trip-report/{report}/download', [App\Http\Controllers\TripReportPdfController::class, 'download'])->name('download');
+});
+
+// Dashboard Pages (User Level)
+Route::middleware(['auth', 'role.level:1'])->group(function () {
+    Route::get('/dashboard/approval-status', ApprovalStatusPage::class)->name('dashboard.approval-status');
+    Route::get('/dashboard/my-delegations', MyDelegationPage::class)->name('dashboard.my-delegations');
 });
 
 // Employee Routes (Admin Level >= 98)
