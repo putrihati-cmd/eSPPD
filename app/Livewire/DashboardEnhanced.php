@@ -5,6 +5,8 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Spd;
 use App\Models\User;
+use App\Services\DashboardCacheService;
+use App\Services\SPDQueryOptimizer;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Livewire\Attributes\On;
@@ -28,6 +30,16 @@ class DashboardEnhanced extends Component
 
     public function loadDashboardData()
     {
+        // Use cache service for faster data retrieval
+        $metrics = DashboardCacheService::getUserMetrics();
+        $this->totalSpdThisMonth = $metrics['total'];
+        $this->pendingApproval = $metrics['pending'];
+        $this->approvedSpd = $metrics['approved'];
+        $this->rejectedSpd = $metrics['rejected'];
+
+        // Use query optimizer for recent SPDs
+        $this->recentSpds = SPDQueryOptimizer::getRecentSpds(5);
+    }
         $user = auth()->user();
         $thisMonth = Carbon::now()->month;
         $thisYear = Carbon::now()->year;
