@@ -3,20 +3,33 @@ name: Security
 on:
   push:
     branches: [ main, master, develop ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ main, master, develop ]
   schedule:
-    - cron: '0 3 * * 1'  # weekly
+    - cron: '0 0 * * 0'  # Run weekly on Sundays
+  workflow_dispatch:
+
+permissions:
+  security-events: write
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: write
 
 jobs:
   codeql:
     name: CodeQL analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: 'php, javascript, python'
-      - uses: github/codeql-action/analyze@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v4
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
 
   secret-scan:
     name: Secret scan (gitleaks - repo history)
