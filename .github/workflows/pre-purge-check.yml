@@ -66,14 +66,12 @@ jobs:
           echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
           echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
           echo "- Branch protection:"
-          cat <<'PROTECTION'
-${{ steps.branch_protect.outputs.protection }}
-PROTECTION
+          protection_output="${{ steps.branch_protect.outputs.protection }}"
+          printf '%s\n' "$protection_output"
           echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
           echo "- Checks:"
-          cat <<'CHECKS'
-${{ steps.verify_ci.outputs.checks }}
-CHECKS
+          checks_output="${{ steps.verify_ci.outputs.checks }}"
+          printf '%s\n' "$checks_output"
 
       - name: Create coordination issue (if none exists)
         uses: actions/github-script@v6
