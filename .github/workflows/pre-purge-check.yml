@@ -62,13 +62,9 @@ jobs:
           echo "Pre-purge check summary:"
           echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
           echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
-          echo "- Branch protection:"
-          protection_output='${{ steps.branch_protect.outputs.protection }}'
-          printf '%s\n' "$protection_output"
+          echo "- Branch protection: ${{ steps.branch_protect.outputs.protection }}"
           echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
-          echo "- Checks:"
-          checks_output='${{ steps.verify_ci.outputs.checks }}'
-          printf '%s\n' "$checks_output"
+          echo "- Checks: ${{ steps.verify_ci.outputs.checks }}"
       - name: Create coordination issue (if none exists)
         uses: actions/github-script@v6
         with:
