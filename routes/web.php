@@ -26,6 +26,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Public Pages
+Route::get('/about', [App\Http\Controllers\PublicPageController::class, 'about'])->name('about');
+Route::get('/guide', [App\Http\Controllers\PublicPageController::class, 'guide'])->name('guide');
+
 // Test Routes & UI (Development only)
 Route::get('/test-routes', function () {
     return view('test-routes');
@@ -214,5 +218,4 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
 });
 
-require __DIR__.'/auth.php';
-
+require __DIR__ . '/auth.php';
