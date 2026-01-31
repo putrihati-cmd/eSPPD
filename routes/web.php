@@ -34,13 +34,13 @@ Route::middleware(['auth', 'role.level:1'])->prefix('spd')->name('spd.')->group(
     Route::get('/', SpdIndex::class)->name('index');
     Route::get('/create', SpdCreate::class)->name('create');
     Route::get('/{spd}', SpdShow::class)->name('show');
-    
+
     // PDF Routes
     Route::get('/{spd}/pdf/spt', [App\Http\Controllers\SpdPdfController::class, 'downloadSpt'])->name('pdf.spt');
     Route::get('/{spd}/pdf/spd', [App\Http\Controllers\SpdPdfController::class, 'downloadSpd'])->name('pdf.spd');
     Route::get('/{spd}/preview/spt', [App\Http\Controllers\SpdPdfController::class, 'viewSpt'])->name('preview.spt');
     Route::get('/{spd}/preview/spd', [App\Http\Controllers\SpdPdfController::class, 'viewSpd'])->name('preview.spd');
-    
+
     // Revision Routes (dari fitur.md - Flow Revisi SPPD)
     Route::get('/{spd}/revisi', [App\Http\Controllers\SppdRevisionController::class, 'editRejected'])->name('revisi');
     Route::post('/{spd}/resubmit', [App\Http\Controllers\SppdRevisionController::class, 'resubmit'])->name('resubmit');
@@ -126,11 +126,11 @@ Route::middleware('guest')->prefix('password-otp')->group(function () {
     // Step 1: Request OTP
     Route::get('/forgot', [ForgotPasswordController::class, 'showForgotForm'])->name('password.request.otp');
     Route::post('/forgot', [ForgotPasswordController::class, 'sendOtp'])->name('password.send-otp');
-    
+
     // Step 2: Verify OTP
     Route::get('/verify/{token}', [ForgotPasswordController::class, 'showVerifyForm'])->name('password.otp');
     Route::post('/verify', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify-otp');
-    
+
     // Step 3: Reset Password
     Route::get('/reset/{token}', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset-form');
     Route::post('/reset', [ForgotPasswordController::class, 'resetPassword'])->name('password.reset.otp');
@@ -141,12 +141,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/change-password', function () {
         return view('auth.force-change-password');
     })->name('password.force-change');
-    
+
     Route::post('/change-password', function (\Illuminate\Http\Request $request) {
         $request->validate([
             'password' => 'required|min:8|confirmed',
         ]);
-        
+
         /** @var \App\Models\User $user */
         $user = $request->user();
         $user->update([
@@ -154,7 +154,7 @@ Route::middleware('auth')->group(function () {
             'is_password_reset' => true,
             'last_password_reset' => now()
         ]);
-        
+
         return redirect()->route('dashboard')->with('success', 'Password berhasil diubah!');
     })->name('password.force-update');
 });
