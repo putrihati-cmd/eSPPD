@@ -40,51 +40,6 @@ class DashboardEnhanced extends Component
         // Use query optimizer for recent SPDs
         $this->recentSpds = SPDQueryOptimizer::getRecentSpds(5);
     }
-        $user = auth()->user();
-        $thisMonth = Carbon::now()->month;
-        $thisYear = Carbon::now()->year;
-
-        // Common stats for all users
-        $this->totalSpdThisMonth = Spd::whereMonth('created_at', $thisMonth)
-            ->whereYear('created_at', $thisYear)
-            ->where('user_id', $user->id)
-            ->count();
-
-        // Pending approvals (for approvers)
-        $this->pendingApproval = Spd::where('status', 'pending_approval')
-            ->where('approver_id', $user->id)
-            ->count();
-
-        // Approved this month (for approvers)
-        $this->approvedSpd = Spd::where('status', 'approved')
-            ->whereMonth('updated_at', $thisMonth)
-            ->whereYear('updated_at', $thisYear)
-            ->where('approver_id', $user->id)
-            ->count();
-
-        // Rejected this month (for approvers)
-        $this->rejectedSpd = Spd::where('status', 'rejected')
-            ->whereMonth('updated_at', $thisMonth)
-            ->whereYear('updated_at', $thisYear)
-            ->where('approver_id', $user->id)
-            ->count();
-
-        // Recent SPDs
-        $this->recentSpds = Spd::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get()
-            ->map(fn($spd) => [
-                'id' => $spd->id,
-                'destination' => $spd->destination,
-                'status' => $spd->status,
-                'status_label' => $this->getStatusLabel($spd->status),
-                'status_color' => $this->getStatusColor($spd->status),
-                'start_date' => $spd->start_date->format('d M Y'),
-                'end_date' => $spd->end_date->format('d M Y'),
-            ])
-            ->toArray();
-    }
 
     public function toggleSection($section)
     {
