@@ -1,0 +1,42 @@
+name: Security
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # weekly
+
+jobs:
+  codeql:
+    name: CodeQL analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v2
+        with:
+          languages: php, javascript, python
+      - uses: github/codeql-action/analyze@v2
+
+  secret-scan:
+    name: Secret scan (gitleaks - repo history)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          curl -sSL "https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks_$(uname -s)_$(uname -m).tar.gz" -o gitleaks.tgz || true
+          mkdir -p bin || true
+          tar -xzf gitleaks.tgz -C bin || true
+          ls -la bin || true
+      - name: Run gitleaks across repo history
+        run: |
+          ./bin/gitleaks detect --repo-path . --report-path gitleaks-report.json --redact || true
+      - name: Upload gitleaks report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
