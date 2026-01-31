@@ -1,0 +1,16 @@
+#!/bin/bash
+# Wrapper script to auto-sync database after artisan commands
+# Usage: ./artisan <command> [options]
+
+# Run the actual artisan command
+php artisan "$@"
+COMMAND_EXIT_CODE=$?
+
+# If command succeeded and AUTO_DB_SYNC is enabled, sync database
+if [ $COMMAND_EXIT_CODE -eq 0 ] && grep -q "AUTO_DB_SYNC=true" .env 2>/dev/null; then
+    echo ""
+    echo "🔄 Auto-syncing database to production..."
+    php artisan db:sync-to-production
+fi
+
+exit $COMMAND_EXIT_CODE
