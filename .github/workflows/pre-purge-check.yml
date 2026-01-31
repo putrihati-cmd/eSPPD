@@ -22,7 +22,6 @@ jobs:
             echo "ADMIN_TOKEN_PRESENT=true" >> $GITHUB_OUTPUT
             echo "ADMIN_TOKEN present"
           fi
-
       - name: Check branch protection on main
         id: branch_protect
         uses: actions/github-script@v6
@@ -47,7 +46,6 @@ jobs:
                 core.setFailed('Branch protection cannot be read: ' + msg);
               }
             }
-
       - name: Verify CI status for latest commit
         id: verify_ci
         uses: actions/github-script@v6
@@ -59,20 +57,18 @@ jobs:
             const conclusions = checks.data.check_runs.map(c => ({name: c.name, conclusion: c.conclusion}));
             core.setOutput('commit_sha', sha);
             core.setOutput('checks', JSON.stringify(conclusions));
-
       - name: Output summary
         run: |
           echo "Pre-purge check summary:"
           echo "- ADMIN_TOKEN_PRESENT=${{ steps.check_secret.outputs.ADMIN_TOKEN_PRESENT }}"
           echo "- Branch protection found: ${{ steps.branch_protect.outputs.branch_protection_found }}"
           echo "- Branch protection:"
-          protection_output="${{ steps.branch_protect.outputs.protection }}"
+          protection_output='${{ steps.branch_protect.outputs.protection }}'
           printf '%s\n' "$protection_output"
           echo "- Latest commit: ${{ steps.verify_ci.outputs.commit_sha }}"
           echo "- Checks:"
-          checks_output="${{ steps.verify_ci.outputs.checks }}"
+          checks_output='${{ steps.verify_ci.outputs.checks }}'
           printf '%s\n' "$checks_output"
-
       - name: Create coordination issue (if none exists)
         uses: actions/github-script@v6
         with:
