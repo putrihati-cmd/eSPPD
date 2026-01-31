@@ -186,6 +186,8 @@ use App\Livewire\Admin\UserManagement;
 use App\Livewire\Admin\RoleManagement;
 use App\Livewire\Admin\OrganizationManagement;
 use App\Livewire\Admin\DelegationManagement;
+use App\Livewire\Admin\AuditLogViewer;
+use App\Livewire\Admin\ActivityDashboard;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // User management - Gate check is inside controller
@@ -199,6 +201,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/role-management', RoleManagement::class)->name('role-management');
         Route::get('/organization-management', OrganizationManagement::class)->name('organization-management');
         Route::get('/delegation-management', DelegationManagement::class)->name('delegation-management');
+        Route::get('/audit-logs', AuditLogViewer::class)->name('audit-logs');
+        Route::get('/activity-dashboard', ActivityDashboard::class)->name('activity-dashboard');
     });
 });
 

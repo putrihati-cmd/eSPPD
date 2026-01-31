@@ -41,7 +41,7 @@ class UserManagement extends Component
     {
         return User::query()
             ->with(['roleModel', 'organization'])
-            ->when($this->search, fn($q) => 
+            ->when($this->search, fn($q) =>
                 $q->where('name', 'like', "%{$this->search}%")
                   ->orWhere('email', 'like', "%{$this->search}%")
                   ->orWhere('nip', 'like', "%{$this->search}%")
@@ -73,7 +73,7 @@ class UserManagement extends Component
             $this->role_id = $user->role_id;
             $this->organization_id = $user->organization_id;
             $this->password = '';
-            
+
             $this->validateOnly(['name', 'email', 'nip', 'role_id', 'organization_id'], [
                 'email' => 'required|email|unique:users,email,' . $userId,
                 'nip' => 'required|string|unique:users,nip,' . $userId,
