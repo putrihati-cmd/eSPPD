@@ -122,7 +122,15 @@ Target dashboard (Level 3 - Manager):
    - Bagaimana handle state management untuk multiple role dashboards?
    - Caching strategy untuk performance (474 users)?
 
-2. **Database Query Optimization:**
+2. **Livewire Volt Specific Concerns:**
+   - Volt masih relatively new (Laravel 11), ada maturity issues untuk production?
+   - Component reusability strategy untuk multi-role dashboards?
+   - State management best practices untuk complex views?
+   - Performance implications Volt vs traditional Livewire?
+   - What's the learning curve untuk team familiar dengan old Livewire?
+   - Bagaimana handle component composition (nested Volt components)?
+
+3. **Database Query Optimization:**
    - Current queries untuk dashboard load semua SPPD?
    - Optimization untuk role-based filtering:
      ```
@@ -215,10 +223,25 @@ SPPD dashboard redesign sedang di-plan untuk Phase 1 implementation. Saya butuh 
    - Tailwind CSS modern features support di IE? (probably not used, but check)
    - Livewire Volt maturity level - any known issues?
 
-7. **Rollback Complexity** (MEDIUM)
+7. **Livewire Volt Specific Risk** (MEDIUM)
+   - Volt still relatively new (Laravel 11 feature)
+   - Production maturity for enterprise use?
+   - Community support & documentation?
+   - Version upgrade path & breaking changes?
+   - Performance characteristics vs traditional Livewire?
+
+8. **Rollback Complexity** (MEDIUM)
    - Jika rollback needed, how long downtime?
    - Data loss risk?
    - User confusion if rollback?
+
+9. **Technical Debt Risk** (MEDIUM)
+   - Jika push untuk quick delivery, pasti ada shortcuts
+   - Risk: Technical debt accumulation
+   - Future maintenance cost increase estimate?
+   - When to refactor vs when to rebuild di future?
+   - Tech debt tracking mechanism untuk dashboard?
+   - Berapa debt budget acceptable untuk Phase 1?
 
 ## QUESTIONS:
 
@@ -315,32 +338,66 @@ SPPD redesign proposal kebutuhan justification untuk approval dari management. H
    - Risk reduction (fewer errors)?
    - How to communicate intangibles ke management?
 
-3. **Competitor/Best Practice:**
+3. **Build vs Buy Analysis:**
+   - Alternative: Purchase SaaS SPPD instead (Zoho Expense, Certify, Concur, etc.)?
+   - Comparison criteria:
+     * Total Cost of Ownership (TCO) 3-year outlook
+     * Implementation timeline
+     * Customization ability (vs off-the-shelf)
+     * Data migration complexity
+     * Vendor lock-in risk
+     * Support & ongoing costs
+   - Strengths of custom redesign vs buying SaaS?
+   - Risk of choosing wrong approach?
+   - Decision framework untuk evaluate?
+
+4. **Competitor/Best Practice:**
    Bagaimana other universities handle SPPD systems?
    Apa benchmark bisa digunakan untuk justify modern UI?
+   SaaS adoption trend di education sector?
 
-4. **Phased Approach Justification:**
+5. **Phased Approach Justification:**
    Kenapa Phase 1 (dashboard) dulu, bukan langsung full redesign?
    - Cost saving vs benefit: worth it?
    - Risk reduction: meaningful difference?
    - How to explain phased approach ke management?
+   - Alternative: Full rebuild vs incremental redesign?
 
-5. **Opportunity Cost:**
+6. **Opportunity Cost:**
    - Jika tidak redesign, apa risk organisasi?
    - User turnover due to frustration? (unlikely but mention?)
    - Regulatory/audit issues if approval slow? (SPPD adalah compliance need?)
    - Innovation perception (modern vs dated)?
+   - Cost of status quo (hidden support costs)?
 
-6. **Implementation Risk Impact:**
+7. **Implementation Risk Impact:**
    Jika redesign gagal (rollback needed):
    - Sunk cost: $6,500 gone (how to frame this?)
    - Repeat investment: Buat ulang dari awal?
    - How to minimize "failure cost" perception?
+   - Insurance/contingency budget untuk failure scenario?
 
-7. **Success Metrics untuk Report:**
+8. **Success Metrics untuk Report:**
    Apa metrics bisa ditrack & report post-launch untuk show ROI?
    - Support tickets: "Decreased from 50/week to 20/week"
    - Task time: "Average approval time reduced from 2.5 days to 1.2 days"
+   - User satisfaction: "80% positive feedback in survey"
+   - Mobile adoption: "30% increase in mobile access"
+   - Technical debt metrics: Lines of code, test coverage, etc.
+   
+   Ini trackable metrics or too ambitious?
+
+9. **Presentation Strategy:**
+   Untuk present ke decision makers (IT Director, VP Academic):
+   - What's the hook/opening statement?
+   - Data to emphasize?
+   - Build vs Buy recommendation + rationale?
+   - Risks to downplay/acknowledge honestly?
+   - TCO comparison vs alternatives?
+   - Call to action (approval process)?
+
+Berikan business case yang konkret, pakai numbers konkret, dan defensible assumptions.
+Kuatkan dengan "why custom redesign better than buying SaaS" narrative.
    - User satisfaction: "80% positive feedback in survey"
    - Mobile adoption: "30% increase in mobile access"
    
