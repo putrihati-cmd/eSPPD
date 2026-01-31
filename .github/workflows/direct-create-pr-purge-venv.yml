@@ -1,0 +1,21 @@
+name: Direct-create PR for purge venv branch
+
+on:
+  push:
+    branches:
+      - 'security/purge-venv-history'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR via GitHub REST API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          echo "Creating PR from security/purge-venv-history to main via REST API"
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls"
+          PAYLOAD=$(jq -n --arg title "chore(security): purge document-service/venv and add docs" --arg head "security/purge-venv-history" --arg base "main" --arg body "This PR contains history rewrite workflow and docs. Please review and merge when checks pass." '{title:$title, head:$head, base:$base, body:$body}')
+          echo "$PAYLOAD" > /tmp/pr.json
+          curl -s -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "$API" -d @/tmp/pr.json | jq .

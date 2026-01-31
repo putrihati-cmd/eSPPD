@@ -1,0 +1,82 @@
+name: Purge document-service/venv from history
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type CONFIRM to proceed with irreversible history rewrite"
+        required: true
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  purge:
+    if: ${{ github.event.inputs.confirm == 'CONFIRM' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (shallow not used)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install git-filter-repo
+        run: pip install git-filter-repo
+
+      - name: Mirror clone repository
+        run: |
+          set -e
+          REPO_URL="https://x-access-token:${{ secrets.ADMIN_TOKEN }}@github.com/${{ github.repository }}"
+          git clone --mirror "$REPO_URL" repo.git
+          cd repo.git
+          # Create a backup tag before rewriting history
+          BACKUP_TAG="backup/pre-history-rewrite-$(date -u +'%Y%m%d-%H%M%S')"
+          git tag "$BACKUP_TAG"
+          git push origin --tags
+
+      - name: Run git-filter-repo to remove venv
+        run: |
+          set -e
+          cd repo.git
+          # Remove the folder from all history
+          git filter-repo --invert-paths --path document-service/venv
+
+      - name: Verify removal
+        run: |
+          set -e
+          cd repo.git
+          if git log --all --pretty=format:'%H' -- document-service/venv | grep -q .; then
+            echo "document-service/venv still present in history"
+            exit 1
+          else
+            echo "document-service/venv removal verified"
+          fi
+
+      - name: Force push rewritten history
+        run: |
+          set -e
+          cd repo.git
+          git push --force --all
+          git push --force --tags
+
+      - name: Open issue to report completion
+        uses: peter-evans/create-issue@v4
+        with:
+          token: ${{ secrets.ADMIN_TOKEN }}
+          title: 'History rewrite: removed document-service/venv'
+          body: |
+            The repository history was rewritten to remove `document-service/venv`.
+
+            Backup tag created: `backup/pre-history-rewrite-*` (see repository tags).
+
+            Important follow-up steps for all collaborators:
+            - Re-clone the repository: `git clone https://github.com/${{ github.repository }}.git`
+            - Rotate any secrets that may have been exposed in the past.
+
+            If you did not expect this change, contact repository admins immediately.
