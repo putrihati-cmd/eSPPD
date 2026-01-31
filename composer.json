@@ -57,6 +57,28 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "lint": [
+            "@php artisan pint --ansi"
+        ],
+        "cs": [
+            "@php vendor/bin/php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.php || true"
+        ],
+        "analyze": [
+            "@php vendor/bin/phpstan analyse --memory-limit=2G || true"
+        ],
+        "ci": [
+            "composer install --no-interaction --prefer-dist --no-progress --no-suggest",
+            "@php artisan key:generate --ansi || true",
+            "@php artisan migrate --no-interaction --force || true",
+            "@php artisan config:cache --ansi || true",
+            "composer test"
+        ],
+        "secret-scan": [
+            "gitleaks detect --source . || true"
+        ],
+        "pre-commit-install": [
+            "pre-commit install"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
