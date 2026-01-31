@@ -184,6 +184,12 @@
         @endif
     </div>
 
+    <!-- Charts Section -->
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <livewire:charts.spd-trend-chart />
+        <livewire:charts.spd-status-chart />
+    </div>
+
     <!-- Footer Note -->
     <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p class="text-sm text-blue-900">
