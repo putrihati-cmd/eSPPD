@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production') || app()->environment('local')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         // RBAC.md: Admin access (superadmin, admin)
         Gate::define('access-admin', function ($user) {
             return $user->isAdmin();

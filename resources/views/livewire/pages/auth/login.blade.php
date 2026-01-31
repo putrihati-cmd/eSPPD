@@ -1,21 +1,34 @@
 <?php
 
 use App\Livewire\Forms\LoginForm;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component {
-    public LoginForm $form;
+    public string $nip = '';
+    public string $password = '';
+    public bool $remember = false;
 
     /**
      * Handle an incoming authentication request.
      */
     public function login(): void
     {
-        $this->validate();
+        $this->validate([
+            'nip' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-        $this->form->authenticate();
+        $emailToAuth = str_contains($this->nip, '@') ? $this->nip : $this->nip . '@uinsaizu.ac.id';
+
+        if (!Auth::attempt(['email' => $emailToAuth, 'password' => $this->password], $this->remember)) {
+            throw ValidationException::withMessages([
+                'nip' => 'NIP atau password salah.',
+            ]);
+        }
 
         Session::regenerate();
 
@@ -101,28 +114,28 @@ new #[Layout('layouts.guest')] class extends Component {
                 <!-- Username / NIP -->
                 <div class="space-y-1.5">
                     <label for="nip" class="text-sm font-semibold text-slate-900">Username / NIP</label>
-                    <input wire:model="form.email" id="nip"
+                    <input wire:model="nip" id="nip"
                         class="block w-full h-[44px] px-4 bg-white border border-[#009CA6]/30 text-slate-900 text-sm rounded-md focus:ring-2 focus:ring-[#009CA6] focus:border-[#009CA6] transition-colors placeholder:text-slate-400"
                         type="text" name="nip" required autofocus autocomplete="username"
                         placeholder="Masukkan username atau NIP" />
-                    <x-input-error :messages="$errors->get('form.email')" class="text-xs text-red-500 font-medium" />
+                    <x-input-error :messages="$errors->get('nip')" class="text-xs text-red-500 font-medium" />
                 </div>
 
                 <!-- Password -->
                 <div class="space-y-1.5">
                     <label for="password" class="text-sm font-semibold text-slate-900">Password</label>
                     <div class="relative">
-                        <input wire:model="form.password" id="password" type="password"
+                        <input wire:model="password" id="password" type="password"
                             class="block w-full h-[44px] px-4 bg-white border border-[#009CA6]/30 text-slate-900 text-sm rounded-md focus:ring-2 focus:ring-[#009CA6] focus:border-[#009CA6] transition-colors placeholder:text-slate-400"
                             name="password" required autocomplete="current-password" placeholder="Masukkan password" />
                     </div>
-                    <x-input-error :messages="$errors->get('form.password')" class="text-xs text-red-500 font-medium" />
+                    <x-input-error :messages="$errors->get('password')" class="text-xs text-red-500 font-medium" />
                 </div>
 
                 <!-- Remember & Forgot Password -->
                 <div class="flex items-center justify-between">
                     <label for="remember" class="inline-flex items-center cursor-pointer">
-                        <input id="remember" type="checkbox" wire:model="form.remember"
+                        <input id="remember" type="checkbox" wire:model="remember"
                             class="rounded border-gray-300 text-[#009CA6] shadow-sm focus:ring-[#009CA6]">
                         <span class="ml-2 text-sm text-slate-600">Ingat saya</span>
                     </label>
