@@ -23,7 +23,7 @@ ssh tholib_server@192.168.1.27 "sudo systemctl status php8.5-fpm"
 STEP 3: Deploy Application Code
 =================================
 From project root:
-  
+
   # Option A: Using rsync (preferred)
   bash deploy.sh
 
