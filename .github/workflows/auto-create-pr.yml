@@ -1,0 +1,28 @@
+name: Auto-create PR for security automation
+
+on:
+  push:
+    branches:
+      - 'security/automation'
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "chore(security): add CI, security automation, and docs"
+          body: |
+            This PR consolidates automated security and CI improvements:
+
+            - CI and Full-check workflows
+            - CodeQL and gitleaks scanning
+            - Dependabot config and automerge for safe dependency updates
+            - Pre-commit hooks, scripts for scanning and history cleanup
+            - Docs and hardening checklist
+
+            Please review and merge when green.
+          base: main
+          head: security/automation
+          draft: false

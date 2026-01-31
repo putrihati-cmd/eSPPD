@@ -1,0 +1,21 @@
+name: Auto-merge Dependabot
+
+on:
+  pull_request:
+    types: [labeled, opened, synchronize]
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Automerge Dependabot PRs when checks pass
+        uses: pascalgn/automerge-action@v0.15.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          merge_method: squash
+          # Only merge if PR has label 'automerge' (labeler adds this for dependabot)
+          label: automerge
+          required_status_checks: |
+            Full repository checks
+            CI
+          allow_no_reviews: false
