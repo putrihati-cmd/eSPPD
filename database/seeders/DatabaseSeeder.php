@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
         // Seed new RBAC roles first
         $this->call([
             RoleSeeder::class,
-            TestUserSeeder::class,
         ]);
 
         // Create Organization
@@ -62,6 +61,19 @@ class DatabaseSeeder extends Seeder
         // Create Employees
         $employees = [
             [
+                'nip' => '195001011990031099',
+                'name' => 'Super Admin System',
+                'email' => 'superadmin@uinsaizu.ac.id',
+                'birth_date' => '1950-01-01',
+                'position' => 'Super Administrator',
+                'rank' => 'Pembina Utama',
+                'grade' => 'IV/e',
+                'employment_status' => 'PNS',
+                'unit_id' => $fakultasPsikologi->id,
+                'role_name' => 'superadmin',
+                'approval_level' => 6, // LOGIC MAP: Superadmin has rektor-level (6)
+            ],
+            [
                 'nip' => '198302082015031501',
                 'name' => 'Mawi Khusni Albar',
                 'email' => 'mawikhusni@uinsaizu.ac.id',
@@ -71,7 +83,34 @@ class DatabaseSeeder extends Seeder
                 'grade' => 'IV/a',
                 'employment_status' => 'PNS',
                 'unit_id' => $fakultasPsikologi->id,
-                'is_admin' => true,
+                'role_name' => 'admin',
+                'approval_level' => 6, // LOGIC MAP: Admin has rektor-level (6)
+            ],
+            [
+                'nip' => '195301011988031006',
+                'name' => 'Dr. Rektor UIN',
+                'email' => 'rektor@uinsaizu.ac.id',
+                'birth_date' => '1953-01-01',
+                'position' => 'Rektor',
+                'rank' => 'Pembina Utama Madya',
+                'grade' => 'IV/d',
+                'employment_status' => 'PNS',
+                'unit_id' => $fakultasPsikologi->id,
+                'role_name' => 'rektor',
+                'approval_level' => 6, // LOGIC MAP: Rektor = level 6
+            ],
+            [
+                'nip' => '195402151992031005',
+                'name' => 'Dr. Wakil Rektor',
+                'email' => 'warek@uinsaizu.ac.id',
+                'birth_date' => '1954-02-15',
+                'position' => 'Wakil Rektor',
+                'rank' => 'Pembina Utama Muda',
+                'grade' => 'IV/c',
+                'employment_status' => 'PNS',
+                'unit_id' => $fakultasPsikologi->id,
+                'role_name' => 'warek',
+                'approval_level' => 5, // LOGIC MAP: Warek = level 5
             ],
             [
                 'nip' => '197505152006041001',
@@ -83,7 +122,34 @@ class DatabaseSeeder extends Seeder
                 'grade' => 'IV/c',
                 'employment_status' => 'PNS',
                 'unit_id' => $fakultasPsikologi->id,
-                'is_approver' => true,
+                'role_name' => 'dekan',
+                'approval_level' => 4, // LOGIC MAP: Dekan = level 4
+            ],
+            [
+                'nip' => '197608201998031003',
+                'name' => 'Dr. Wadek Fakultas',
+                'email' => 'wadek@uinsaizu.ac.id',
+                'birth_date' => '1976-08-20',
+                'position' => 'Wakil Dekan',
+                'rank' => 'Penata Tk.I',
+                'grade' => 'III/d',
+                'employment_status' => 'PNS',
+                'unit_id' => $fakultasTarbiyah->id,
+                'role_name' => 'wadek',
+                'approval_level' => 3, // LOGIC MAP: Wadek = level 3
+            ],
+            [
+                'nip' => '197903101999031002',
+                'name' => 'Dr. Kepala Bagian',
+                'email' => 'kaprodi@uinsaizu.ac.id',
+                'birth_date' => '1979-03-10',
+                'position' => 'Kepala Bagian / Kaprodi',
+                'rank' => 'Penata',
+                'grade' => 'III/c',
+                'employment_status' => 'PNS',
+                'unit_id' => $fakultasSyariah->id,
+                'role_name' => 'kabag',
+                'approval_level' => 2, // LOGIC MAP: Kaprodi = level 2
             ],
             [
                 'nip' => '198811202019031001',
@@ -95,6 +161,8 @@ class DatabaseSeeder extends Seeder
                 'grade' => 'III/d',
                 'employment_status' => 'PNS',
                 'unit_id' => $fakultasTarbiyah->id,
+                'role_name' => 'dosen',
+                'approval_level' => 1, // LOGIC MAP: Dosen = level 1
             ],
             [
                 'nip' => '199003152020122001',
@@ -106,6 +174,8 @@ class DatabaseSeeder extends Seeder
                 'grade' => 'III/b',
                 'employment_status' => 'PNS',
                 'unit_id' => $fakultasSyariah->id,
+                'role_name' => 'dosen',
+                'approval_level' => 1, // LOGIC MAP: Dosen = level 1
             ],
             [
                 'nip' => '199505012022011001',
@@ -117,14 +187,15 @@ class DatabaseSeeder extends Seeder
                 'grade' => 'II/c',
                 'employment_status' => 'PPPK',
                 'unit_id' => $fakultasPsikologi->id,
+                'role_name' => 'dosen',
+                'approval_level' => 1, // LOGIC MAP: Staff = level 1
             ],
         ];
 
         foreach ($employees as $empData) {
-            $isAdmin = $empData['is_admin'] ?? false;
-            $isApprover = $empData['is_approver'] ?? false;
             $birthDate = $empData['birth_date'];
-            unset($empData['is_admin'], $empData['is_approver']);
+            $roleName = $empData['role_name'] ?? 'dosen';
+            unset($empData['role_name']);
 
             $employee = Employee::create([
                 ...$empData,
@@ -134,8 +205,7 @@ class DatabaseSeeder extends Seeder
             // Generate password: DDMMYYYY from birth_date
             $passwordDefault = \Carbon\Carbon::createFromFormat('Y-m-d', $birthDate)->format('dmY');
 
-            // Create user for this employee
-            $roleName = $isAdmin ? 'admin' : ($isApprover ? 'dekan' : 'dosen');
+            // Get role model
             $roleModel = \App\Models\Role::where('name', $roleName)->first();
 
             User::create([
@@ -149,12 +219,6 @@ class DatabaseSeeder extends Seeder
                 'role_id' => $roleModel?->id,
                 'is_password_reset' => false,
             ]);
-
-            // Set head of unit for approver
-            if ($isApprover) {
-                $fakultasPsikologi->update(['head_employee_id' => $employee->id]);
-            }
-        }
 
         // Create Budgets (MAK)
         $budgets = [

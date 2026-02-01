@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Database\Seeders\BacktestUserSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
@@ -16,10 +15,8 @@ class RoleSimulationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        // Seed basic data first
+        // Seed all data including production accounts
         $this->seed(DatabaseSeeder::class);
-        // Seed simulation users
-        $this->seed(BacktestUserSeeder::class);
     }
 
     /**
@@ -46,23 +43,24 @@ class RoleSimulationTest extends TestCase
      */
     public function simulation_verify_role_access($nip, $roleName, $expectedLevel)
     {
-        $email = $nip . '@uinsaizu.ac.id';
-        $user = User::with(['roleModel'])->where('email', $email)->first();
+        // Use correct flow: NIP → Employee → User
+        $employee = \App\Models\Employee::where('nip', $nip)->first();
+        $this->assertNotNull($employee, "Employee with NIP {$nip} not found in database.");
 
-        // 1. Data Integrity Check
-        $this->assertNotNull($user, "User with NIP {$nip} not found in database.");
+        $user = $employee->user;
+        $this->assertNotNull($user, "User record for Employee {$nip} not found in database.");
         $this->assertEquals($roleName, $user->role, "Role mapping mismatch for NIP {$nip}.");
         $this->assertEquals($expectedLevel, $user->role_level, "Level mismatch for NIP {$nip}.");
 
-        // 2. Simulation: Login Process (NIP -> Email conversion)
+        // 2. Simulation: Login Process (NIP -> Employee -> User email)
         $component = Volt::test('pages.auth.login')
-            ->set('form.email', $nip) // Testing the NIP input
-            ->set('form.password', 'password');
+            ->set('nip', $nip) // Testing the NIP input (finds Employee by NIP, then gets User.email)
+            ->set('password', 'password');
 
         $component->call('login');
 
         $component->assertHasNoErrors()
-                  ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('dashboard', absolute: false));
 
         $this->assertAuthenticatedAs($user);
 

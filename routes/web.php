@@ -35,13 +35,16 @@ Route::get('/test-routes', function () {
     return view('test-routes');
 })->name('test-routes');
 
+// Auth Routes handled in routes/auth.php
+// Force Change Password route moved there
+
 // Dashboard (Enhanced)
 Route::get('dashboard', DashboardEnhanced::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-// SPD Routes (All authenticated users with level >= 1)
-Route::middleware(['auth', 'role.level:1'])->prefix('spd')->name('spd.')->group(function () {
+// SPD Routes (All authenticated users with approval_level >= 1)
+Route::middleware(['auth', 'approval-level:1'])->prefix('spd')->name('spd.')->group(function () {
     Route::get('/', SpdIndex::class)->name('index');
     Route::get('/create', SpdCreate::class)->name('create');
     Route::get('/{spd}', SpdShow::class)->name('show');
@@ -58,14 +61,14 @@ Route::middleware(['auth', 'role.level:1'])->prefix('spd')->name('spd.')->group(
     Route::get('/{spd}/history', [App\Http\Controllers\SppdRevisionController::class, 'history'])->name('history');
 });
 
-// Approval Routes (Kaprodi+ Level >= 2)
-Route::middleware(['auth', 'role.level:2'])->prefix('approvals')->name('approvals.')->group(function () {
+// Approval Routes (Kaprodi+ approval_level >= 2)
+Route::middleware(['auth', 'approval-level:2'])->prefix('approvals')->name('approvals.')->group(function () {
     Route::get('/', ApprovalIndex::class)->name('index');
     Route::get('/queue', ApprovalQueue::class)->name('queue');
 });
 
-// Reports / Trip Reports Routes (All authenticated users)
-Route::middleware(['auth', 'role.level:1'])->prefix('reports')->name('reports.')->group(function () {
+// Reports / Trip Reports Routes (All authenticated users with approval_level >= 1)
+Route::middleware(['auth', 'approval-level:1'])->prefix('reports')->name('reports.')->group(function () {
     Route::get('/', ReportIndex::class)->name('index');
     Route::get('/builder', ReportBuilder::class)->name('builder');
     Route::get('/trip-report/create/{spd}', TripReportCreate::class)->name('create');
@@ -74,14 +77,14 @@ Route::middleware(['auth', 'role.level:1'])->prefix('reports')->name('reports.')
     Route::get('/trip-report/{report}/download', [App\Http\Controllers\TripReportPdfController::class, 'download'])->name('download');
 });
 
-// Dashboard Pages (User Level)
-Route::middleware(['auth', 'role.level:1'])->group(function () {
+// Dashboard Pages (User with approval_level >= 1)
+Route::middleware(['auth', 'approval-level:1'])->group(function () {
     Route::get('/dashboard/approval-status', ApprovalStatusPage::class)->name('dashboard.approval-status');
     Route::get('/dashboard/my-delegations', MyDelegationPage::class)->name('dashboard.my-delegations');
 });
 
-// Employee Routes (Admin Level >= 98)
-Route::middleware(['auth', 'role.level:98'])->prefix('employees')->name('employees.')->group(function () {
+// Employee Routes (Admin with approval_level = 6 only)
+Route::middleware(['auth', 'approval-level:6'])->prefix('employees')->name('employees.')->group(function () {
     Route::get('/', EmployeeIndex::class)->name('index');
 });
 
@@ -207,8 +210,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::patch('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
     Route::get('/users/{user}/detail', [UserManagementController::class, 'show'])->name('users.show');
 
-    // New Admin Livewire Components (Level >= 98)
-    Route::middleware('role.level:98')->group(function () {
+    // New Admin Livewire Components (approval_level = 6 only, superadmin)
+    Route::middleware('approval-level:6')->group(function () {
         Route::get('/user-management', UserManagement::class)->name('user-management');
         Route::get('/role-management', RoleManagement::class)->name('role-management');
         Route::get('/organization-management', OrganizationManagement::class)->name('organization-management');

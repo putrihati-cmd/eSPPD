@@ -171,9 +171,9 @@
 ## 💡 Key Insights
 
 ### 1. Authentication Fixed
-- **Issue Found**: Login form used NIP, backend expected email
-- **Solution Applied**: Convert NIP to email format (NIP@uinsaizu.ac.id)
-- **Status**: ✅ Deployed to production
+- **Issue Found**: Login form converted NIP to email domain (WRONG: NIP@uinsaizu.ac.id)
+- **Solution Applied**: Use Employee model relation: NIP → Employee → User.email (CORRECT)
+- **Status**: ✅ Refactored and deployed to production
 
 ### 2. RBAC System is Comprehensive
 - **7 Roles** with approval limits (10M to Unlimited)

@@ -98,13 +98,14 @@ database/
 ├── migrations/
 │   ├── ✅ Users table migrations
 │   ├── ✅ RBAC tables (roles, permissions)
-│   └── ✅ Latest: [Add NIP support]
+│   └── ✅ Latest: [NIP authentication with forced password change]
 │
 └── seeders/
+    ├── ✅ RoleSeeder.php
     ├── ✅ PermissionSeeder.php
-    ├── ✅ ProductionUserSeeder.php
-    ├── ✅ [Other seeders]
-    └── ✅ DatabaseSeeder.php (orchestrator)
+    ├── ✅ MasterReferenceSeeder.php
+    ├── ✅ DatabaseSeeder.php (MAIN - orchestrator with 10 production accounts)
+    └── ✅ Other supporting seeders
 ```
 
 ### Controllers & Views

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -61,9 +62,13 @@ class User extends Authenticatable
         return $this->belongsTo(Organization::class);
     }
 
-    public function employee(): BelongsTo
+    /**
+     * LOGIC MAP: Relasi User → Employee (inverse of Employee.user)
+     * User.id ← Employee.user_id (one User has many/one Employee)
+     */
+    public function employee(): HasOne
     {
-        return $this->belongsTo(Employee::class);
+        return $this->hasOne(Employee::class, 'user_id');
     }
 
     /**
@@ -124,7 +129,7 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin' ||
-               $this->roleModel?->isAdmin() ?? false;
+            $this->roleModel?->isAdmin() ?? false;
     }
 
     /**
@@ -133,8 +138,8 @@ class User extends Authenticatable
     public function isApprover(): bool
     {
         return $this->role === 'approver' ||
-               $this->role_level >= 2 ||
-               $this->isAdmin();
+            $this->role_level >= 2 ||
+            $this->isAdmin();
     }
 
     /**

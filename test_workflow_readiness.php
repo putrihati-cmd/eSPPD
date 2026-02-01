@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Simplified SPPD/SPD Workflow Test
  * Tests core workflow without complex UUID requirements
@@ -37,23 +38,23 @@ foreach ($users_to_test as $item) {
         echo "✗ $role account not found\n";
         continue;
     }
-    
+
     Auth::guard('web')->login($user);
-    
+
     // Check if authenticated
     $authenticated = Auth::check();
     $userFromAuth = Auth::user();
-    
+
     if ($authenticated && $userFromAuth->id === $user->id) {
         echo "✓ $role ({$user->name}) can login and access authenticated routes\n";
     } else {
         echo "✗ $role failed authentication check\n";
     }
-    
+
     Auth::guard('web')->logout();
 }
 
-// Step 2: Check database schema  
+// Step 2: Check database schema
 echo "\n\nStep 2: Check SPD Database Tables\n";
 echo str_repeat("-", 70) . "\n\n";
 
@@ -72,7 +73,7 @@ foreach ($tables as $table => $description) {
         ->where('table_name', $table)
         ->where('table_schema', 'public')
         ->exists();
-    
+
     if ($exists) {
         $count = DB::table($table)->count();
         echo "✓ {$description} ($table): $count records\n";
@@ -116,7 +117,7 @@ $hasApprovals = DB::table('information_schema.tables')
 if ($hasApprovals) {
     $appCount = DB::table('approvals')->count();
     echo "Approvals table exists: $appCount records\n";
-    
+
     // Get approval columns to verify structure
     $columns = DB::select("SELECT column_name FROM information_schema.columns WHERE table_name = 'approvals' ORDER BY ordinal_position LIMIT 10");
     echo "Approval table columns: ";
@@ -150,10 +151,10 @@ if ($all_ready) {
 }
 echo str_repeat("=", 70) . "\n\n";
 
-function all($array) {
+function all($array)
+{
     foreach ($array as $item) {
         if (!$item) return false;
     }
     return true;
 }
-?>

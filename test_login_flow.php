@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Test Login Flow Script
  * Tests authentication for all 5 test accounts
@@ -26,31 +27,31 @@ $testAccounts = [
 
 foreach ($testAccounts as $account) {
     echo "Testing: {$account['name']} (NIP: {$account['nip']}) - Role: {$account['role']}\n";
-    
+
     // Check if user exists
     $user = User::where('nip', $account['nip'])->first();
-    
+
     if (!$user) {
         echo "  ❌ User NOT found in database\n";
         continue;
     }
-    
+
     echo "  ✓ User found: {$user->name} | Email: {$user->email} | Role: {$user->role}\n";
-    
+
     // Verify password can be checked
     if (Hash::check($account['password'], $user->password)) {
         echo "  ✓ Password verification passed\n";
     } else {
         echo "  ✗ Password verification failed (password mismatch)\n";
     }
-    
+
     // Verify role matches
     if ($user->role === $account['role']) {
         echo "  ✓ Role matches: {$user->role}\n";
     } else {
         echo "  ✗ Role mismatch: expected {$account['role']}, got {$user->role}\n";
     }
-    
+
     // Test auth attempt
     $credentials = ['nip' => $account['nip'], 'password' => $account['password']];
     if (Auth::guard('web')->attempt($credentials, false)) {
@@ -61,9 +62,8 @@ foreach ($testAccounts as $account) {
     } else {
         echo "  ✗ Auth::attempt() FAILED\n";
     }
-    
+
     echo "\n";
 }
 
 echo "=== TEST COMPLETE ===\n";
-?>

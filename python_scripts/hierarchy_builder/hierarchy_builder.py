@@ -12,9 +12,15 @@ import json
 import os
 import re
 import sys
+import io
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
+# Fix Windows encoding issues
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 try:
     import pandas as pd
@@ -274,11 +280,11 @@ class SmartHierarchyBuilder:
         employee_sql.extend(["", "COMMIT;"])
         users_sql.extend(["", "COMMIT;"])
         
-        # Write files
-        with open(self.output_dir / "sql" / "01_update_employees.sql", "w") as f:
+        # Write files with UTF-8 encoding
+        with open(self.output_dir / "sql" / "01_update_employees.sql", "w", encoding='utf-8') as f:
             f.write("\n".join(employee_sql))
             
-        with open(self.output_dir / "sql" / "02_upsert_users.sql", "w") as f:
+        with open(self.output_dir / "sql" / "02_upsert_users.sql", "w", encoding='utf-8') as f:
             f.write("\n".join(users_sql))
             
         print(f"✅ Generated: {self.output_dir}/sql/01_update_employees.sql")
@@ -294,11 +300,11 @@ class SmartHierarchyBuilder:
             "employees": [emp.to_dict() for emp in self.employees.values()]
         }
         
-        with open(self.output_dir / "logs" / "hierarchy_report.json", "w") as f:
+        with open(self.output_dir / "logs" / "hierarchy_report.json", "w", encoding='utf-8') as f:
             json.dump(hierarchy_data, f, indent=2, ensure_ascii=False)
             
         # Warnings file
-        with open(self.output_dir / "logs" / "warnings.txt", "w") as f:
+        with open(self.output_dir / "logs" / "warnings.txt", "w", encoding='utf-8') as f:
             f.write(f"Generated: {datetime.now().isoformat()}\n")
             f.write(f"Total warnings: {len(self.report.warnings)}\n\n")
             for warning in self.report.warnings:

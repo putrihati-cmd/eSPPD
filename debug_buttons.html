@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Button Debug - eSPPD</title>
+</head>
+<body>
+    <h1>Button Debug Info</h1>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        // Check Livewire
+        const hasLivewire = typeof window.Livewire !== 'undefined';
+        output.innerHTML += `<p><strong>Livewire loaded:</strong> ${hasLivewire}</p>`;
+
+        // Check form
+        const form = document.querySelector('form[wire\\:submit]');
+        if (form) {
+            output.innerHTML += `<p><strong>Form found:</strong> YES</p>`;
+            output.innerHTML += `<p>Form wire:submit action: ${form.getAttribute('wire:submit')}</p>`;
+
+            // Check submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                output.innerHTML += `<p><strong>Submit button found:</strong> YES</p>`;
+                output.innerHTML += `<p>Button text: ${submitBtn.textContent.trim()}</p>`;
+                output.innerHTML += `<p>Button disabled attr: ${submitBtn.getAttribute('wire:loading.attr')}</p>`;
+                output.innerHTML += `<p>Button class: ${submitBtn.className}</p>`;
+            } else {
+                output.innerHTML += `<p><strong>Submit button:</strong> NOT FOUND</p>`;
+            }
+
+            // Check toggle button
+            const toggleBtn = form.querySelector('button[type="button"][wire\\:click="togglePasswordVisibility"]');
+            if (toggleBtn) {
+                output.innerHTML += `<p><strong>Password toggle button:</strong> FOUND</p>`;
+            } else {
+                output.innerHTML += `<p><strong>Password toggle button:</strong> NOT FOUND</p>`;
+            }
+        } else {
+            output.innerHTML += `<p><strong>Form:</strong> NOT FOUND</p>`;
+        }
+
+        // Check inputs
+        const nipInput = document.querySelector('input#nip');
+        const passwordInput = document.querySelector('input#password');
+
+        output.innerHTML += `<p><strong>NIP input:</strong> ${nipInput ? 'FOUND' : 'NOT FOUND'}</p>`;
+        output.innerHTML += `<p><strong>Password input:</strong> ${passwordInput ? 'FOUND' : 'NOT FOUND'}</p>`;
+    </script>
+</body>
+</html>

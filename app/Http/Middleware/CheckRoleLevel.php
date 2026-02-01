@@ -7,14 +7,16 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * RBAC.md Implementation: Role Level Middleware
- * Check if user has minimum role level to access route
- * 
- * Usage: middleware('role.level:3') for Wadek+ only
+ * LOGIC MAP: Approval Level Middleware
+ * Check if user has required approval level to access route
+ * Uses Employee.approval_level (1-6 integer) from LOGIC MAP
+ *
+ * Usage: middleware('approval-level:4,5,6') for Dekan+ only
+ * OR: middleware('approval-level:2') for Kaprodi+ (level 2 minimum)
  */
 class CheckRoleLevel
 {
-    public function handle(Request $request, Closure $next, int $minLevel): Response
+    public function handle(Request $request, Closure $next, ...$allowedLevels): Response
     {
         $user = $request->user();
 
@@ -23,15 +25,17 @@ class CheckRoleLevel
                 ->with('error', 'Silakan login terlebih dahulu');
         }
 
-        $userLevel = $user->role_level ?? 1;
+        // LOGIC MAP: Get approval_level from Employee (1-6), not User.role
+        $userLevel = $user->employee?->approval_level ?? 1;
+        $allowedLevels = array_map('intval', $allowedLevels);
 
-        if ($userLevel < $minLevel) {
+        if (!in_array($userLevel, $allowedLevels)) {
             // Check if it's an AJAX/API request
             if ($request->expectsJson()) {
                 return response()->json([
                     'error' => 'Forbidden',
                     'message' => 'Anda tidak punya akses ke fitur ini',
-                    'required_level' => $minLevel,
+                    'required_level' => min($allowedLevels),
                     'your_level' => $userLevel
                 ], 403);
             }

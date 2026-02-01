@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Test SPPD Workflow
  * Tests creation, submission, and approval flow
@@ -46,14 +47,14 @@ try {
         'budget_amount' => 5000000,
         'status' => 'draft',
     ]);
-    
+
     echo "✓ SPD Created Successfully\n";
     echo "  SPD ID: {$spd->id}\n";
     echo "  Destination: {$spd->destination}\n";
     echo "  Purpose: {$spd->purpose}\n";
     echo "  Budget: Rp " . number_format($spd->budget_amount, 0, ',', '.') . "\n";
     echo "  Status: {$spd->status}\n";
-    
+
     $spdId = $spd->id;
 } catch (\Exception $e) {
     echo "✗ Failed to create SPD: {$e->getMessage()}\n";
@@ -103,7 +104,7 @@ echo str_repeat("-", 70) . "\n\n";
 
 if ($pendingApprovals->count() > 0) {
     $spdToApprove = $pendingApprovals->first();
-    
+
     try {
         // Record approval
         $approval = Approval::create([
@@ -114,10 +115,10 @@ if ($pendingApprovals->count() > 0) {
             'notes' => 'Disetujui oleh Kaprodi',
             'approved_at' => now(),
         ]);
-        
+
         // Update SPD status to approved
         $spdToApprove->update(['status' => 'approved']);
-        
+
         echo "✓ SPD Approved by Kaprodi\n";
         echo "  Approval ID: {$approval->id}\n";
         echo "  Level: {$approval->level}\n";
@@ -157,4 +158,3 @@ if ($totalSpds > 0) {
 echo "\n" . str_repeat("=", 70) . "\n";
 echo "TEST COMPLETE\n";
 echo str_repeat("=", 70) . "\n\n";
-?>

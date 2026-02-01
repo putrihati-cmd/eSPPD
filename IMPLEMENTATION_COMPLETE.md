@@ -79,15 +79,18 @@
 - [x] SimpleRbacTest.php - 4 basic smoke tests
 - [x] RbacIntegrationTest.php - 6 integration tests
 
-### ✅ Test Data (Complete)
-- [x] TestUserSeeder.php - 7 test accounts:
-  - Admin: admin@esppd.test
-  - Rektor: rektor@esppd.test
-  - Warek: warek@esppd.test
-  - Dekan: dekan@esppd.test
-  - Wadek: wadek@esppd.test
-  - Kaprodi: kaprodi@esppd.test
-  - Dosen: dosen@esppd.test
+### ✅ Production Accounts (Complete)
+- [x] DatabaseSeeder.php - 10 production accounts:
+  - Super Admin: superadmin@uinsaizu.ac.id (level 99)
+  - Admin: mawikhusni@uinsaizu.ac.id (level 98)
+  - Rektor: rektor@uinsaizu.ac.id (level 6)
+  - Wakil Rektor: warek@uinsaizu.ac.id (level 5)
+  - Dekan: ansori@uinsaizu.ac.id (level 4)
+  - Wakil Dekan: wadek@uinsaizu.ac.id (level 3)
+  - Kaprodi: kaprodi@uinsaizu.ac.id (level 2)
+  - Dosen (3 accounts): dosen1,2,3@uinsaizu.ac.id (level 1)
+  - All use DDMMYYYY password from birth_date
+  - All set is_password_reset=false for first login
   - All with password: `password123`
 
 ---

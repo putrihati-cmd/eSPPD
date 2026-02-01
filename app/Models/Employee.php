@@ -28,6 +28,8 @@ class Employee extends Model
         'rank',
         'grade',
         'employment_status',
+        'approval_level',
+        'superior_nip',
         'bank_name',
         'bank_account',
         'bank_account_name',
@@ -87,11 +89,33 @@ class Employee extends Model
     }
 
     /**
+     * LOGIC MAP: Get human-readable level name from approval_level (1-6)
+     * 1 = Staff/Dosen
+     * 2 = Kepala Prodi
+     * 3 = Wakil Dekan
+     * 4 = Dekan
+     * 5 = Wakil Rektor
+     * 6 = Rektor
+     */
+    public function getLevelNameAttribute(): string
+    {
+        return match ($this->approval_level) {
+            1 => 'Staff/Dosen',
+            2 => 'Kepala Prodi',
+            3 => 'Wakil Dekan',
+            4 => 'Dekan',
+            5 => 'Wakil Rektor',
+            6 => 'Rektor',
+            default => 'Unknown',
+        };
+    }
+
+    /**
      * Check if employee is an approver
      */
     public function isApprover(): bool
     {
-        return $this->headOfUnits()->exists() || 
-               ($this->user && $this->user->role === 'approver');
+        return $this->headOfUnits()->exists() ||
+            ($this->user && $this->user->role === 'approver');
     }
 }

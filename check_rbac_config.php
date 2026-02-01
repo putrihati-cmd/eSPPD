@@ -49,4 +49,3 @@ if ($rolePerms->count() > 0) {
         echo "  Role: " . ($role ? $role->name : "?") . " → Permission: " . ($permission ? $permission->name : "?") . "\n";
     }
 }
-?>

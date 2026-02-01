@@ -193,7 +193,7 @@ php artisan test tests/Feature/SimpleRbacTest.php --no-coverage
 | `app/Providers/AuthServiceProvider.php` | 16 permission gates | 80 |
 | `resources/views/components/sidebar.blade.php` | UI with @can | 160 |
 | `database/seeders/PermissionSeeder.php` | Permissions setup | 72 |
-| `database/seeders/TestUserSeeder.php` | Test accounts | 80+ |
+| `database/seeders/DatabaseSeeder.php` | Production accounts | 10 |
 
 ---
 
@@ -237,7 +237,7 @@ php artisan test tests/Feature/SimpleRbacTest.php --no-coverage
 ⚠️ **Role Level:** Computed from `roleModel->level`, not stored in users table  
 ⚠️ **Gates Registered:** All gates registered in `AuthServiceProvider.php`  
 ⚠️ **Permissions:** Create permissions in `PermissionSeeder.php`  
-⚠️ **Test Data:** Use `TestUserSeeder.php` for test accounts  
+✅ **Production Data:** DatabaseSeeder.php includes all 10 production accounts with proper roles and DDMMYYYY passwords  
 
 ---
 
