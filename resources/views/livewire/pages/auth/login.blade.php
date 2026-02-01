@@ -182,9 +182,9 @@
                             <label for="nip" class="text-sm font-bold text-gray-700 ml-1">Username / NIP</label>
                             <div class="relative group">
                                 <input wire:model.debounce.400ms="nip" id="nip" type="text" name="nip" required autofocus
-                                    inputmode="numeric" pattern="[0-9]*" maxlength="18"
-                                    class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('nip') border-red-500 ring-2 ring-red-200 @enderror"
-                                    placeholder="Masukkan NIP (angka saja)" aria-invalid="@error('nip')true@enderror" aria-describedby="nip-error nip-help" autocomplete="username"
+                                      inputmode="numeric" pattern="[0-9]*" maxlength="18"
+                                      class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium {{ $errors->has('nip') ? 'border-red-500 ring-2 ring-red-200' : '' }}"
+                                      placeholder="Masukkan NIP (angka saja)" aria-invalid="{{ $errors->has('nip') ? 'true' : 'false' }}" aria-describedby="nip-error nip-help" autocomplete="username"
                                     @keydown="if (!/^[0-9]$/.test($event.key) && $event.key !== 'Backspace' && $event.key !== 'Tab') $event.preventDefault();"
                                 />
                                 <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
@@ -215,18 +215,18 @@
                             <label for="password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
                             <div class="relative group">
                                 <input
-                                    wire:model.debounce.400ms="password"
-                                    id="password"
-                                    type="{{ $showPassword ? 'text' : 'password' }}"
-                                    name="password"
-                                    required
-                                    minlength="8"
-                                    class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('password') border-red-500 ring-2 ring-red-200 @enderror"
-                                    placeholder="Masukkan password minimal 8 karakter"
-                                    aria-invalid="@error('password')true@enderror"
-                                    aria-describedby="password-error password-help"
-                                    autocomplete="current-password"
-                                    onpaste="return false;"
+                                      wire:model.debounce.400ms="password"
+                                      id="password"
+                                      type="{{ $showPassword ? 'text' : 'password' }}"
+                                      name="password"
+                                      required
+                                      minlength="8"
+                                      class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium {{ $errors->has('password') ? 'border-red-500 ring-2 ring-red-200' : '' }}"
+                                      placeholder="Masukkan password minimal 8 karakter"
+                                      aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
+                                      aria-describedby="password-error password-help"
+                                      autocomplete="current-password"
+                                      onpaste="return false;"
                                 />
                                 <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
