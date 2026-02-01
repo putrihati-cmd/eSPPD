@@ -25,25 +25,23 @@ new #[Layout('layouts.login')] class extends Component
                 'password' => 'required|string|min:8',
             ]);
 
-            // Attempt login: First check if NIP belongs to an employee
             $employee = Employee::where('nip', $this->nip)->first();
 
             if (!$employee) {
-                // Fallback: Check if it's a direct email login (for admin/superadmin)
                 if (Auth::attempt(['email' => $this->nip, 'password' => $this->password], $this->remember)) {
                     $this->handleSuccess();
                     return;
                 }
-                throw ValidationException::withMessages(['nip' => 'Identitas tidak ditemukan.']);
+                throw ValidationException::withMessages(['nip' => 'Kredensial tidak ditemukan.']);
             }
 
             $user = $employee->user;
             if (!$user) {
-                throw ValidationException::withMessages(['nip' => 'Akun belum diaktifkan.']);
+                throw ValidationException::withMessages(['nip' => 'Akun belum aktif.']);
             }
 
             if (!Auth::attempt(['email' => $user->email, 'password' => $this->password], $this->remember)) {
-                throw ValidationException::withMessages(['password' => 'Kata sandi tidak sesuai.']);
+                throw ValidationException::withMessages(['password' => 'Password salah.']);
             }
 
             $this->handleSuccess();
@@ -52,7 +50,7 @@ new #[Layout('layouts.login')] class extends Component
             throw $e;
         } catch (\Exception $e) {
             $this->isLoading = false;
-            session()->flash('error', 'Integrasi sistem terhambat: ' . $e->getMessage());
+            session()->flash('error', 'Error: ' . $e->getMessage());
         }
     }
 
@@ -68,28 +66,17 @@ new #[Layout('layouts.login')] class extends Component
 
         $this->redirectIntended(route('dashboard'), navigate: true);
     }
-
-    public function togglePassword(): void
-    {
-        $this->showPassword = !$this->showPassword;
-    }
 }
 ?>
 
-<div class="selection:bg-[#D4E157] selection:text-black font-sans min-h-screen relative overflow-hidden bg-[#009ca6]">
+<div class="selection:bg-[#D4E157] selection:text-black font-sans min-h-screen relative overflow-hidden flex items-center justify-center p-6 bg-[#009ca6]">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
-        :root {
-            --saizu-teal: #009ca6;
-            --saizu-lime: #d4e157;
-            --saizu-dark-teal: #007c85;
-        }
 
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
-            background-color: var(--saizu-teal);
+            background-color: #009ca6;
         }
 
         .pattern-bg {
@@ -103,193 +90,335 @@ new #[Layout('layouts.login')] class extends Component
             z-index: 1;
         }
 
-        .glow-overlay {
-            position: fixed;
-            inset: 0;
-            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%);
-            z-index: 2;
-        }
-
-        .top-glow {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
-            z-index: 50;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            padding: 3rem;
+        .main-container {
+            position: relative;
+            z-index: 10;
             width: 100%;
-            max-width: 480px;
+            max-width: 1280px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        /* Hero Text Styles */
+        .hero-section {
+            flex: 1;
+            color: white;
+            padding-right: 4rem;
+        }
+
+        .badge-saizu {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #d4e157;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-title {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-title .highlight {
+            color: #d4e157;
+            display: block;
+        }
+
+        .hero-desc {
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.82);
+            margin-bottom: 3rem;
+            max-width: 520px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1.25rem;
+            margin-bottom: 5rem;
         }
 
         .btn-lime {
-            background-color: var(--saizu-lime);
-            color: #1f2937;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .btn-lime:hover {
-            filter: brightness(0.95);
-            transform: translateY(-1px);
-        }
-
-        .btn-teal {
-            background-color: var(--saizu-teal);
-            color: #ffffff;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .btn-teal:hover {
-            background-color: var(--saizu-dark-teal);
-            transform: translateY(-1px);
-        }
-
-        .input-saizu {
-            background-color: #f9fafb;
-            border: 1px solid #e5e7eb;
+            background-color: #d4e157;
+            color: #1a202c;
+            padding: 12px 28px;
             border-radius: 8px;
-            padding: 0.75rem 1rem;
-            width: 100%;
-            font-weight: 500;
-            color: #111827;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             transition: all 0.2s;
+            text-decoration: none;
         }
-        .input-saizu:focus {
+
+        .btn-outline {
+            background-color: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 5rem;
+        }
+
+        .stat-item h3 {
+            font-size: 44px;
+            font-weight: 800;
+            color: #d4e157;
+            margin-bottom: 0px;
+        }
+
+        .stat-item p {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 1);
+            margin-top: 4px;
+        }
+
+        /* Login Card Styles */
+        .login-card-wrapper {
+            flex: 0 0 440px;
+        }
+
+        .login-card {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+        }
+
+        .logo-img {
+            height: 70px;
+            margin-bottom: 24px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            margin-left: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
             outline: none;
-            border-color: var(--saizu-teal);
-            box-shadow: 0 0 0 3px rgba(0, 156, 166, 0.1);
-            background-color: #ffffff;
+            border-color: #009ca6;
+            box-shadow: 0 0 0 4px rgba(0, 156, 166, 0.08);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .form-footer-links {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
         }
 
-        .animate-fade {
-            animation: fadeIn 0.6s ease-out forwards;
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            font-weight: 700;
+            color: #009ca6;
+            text-decoration: none;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #009ca6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 24px;
+        }
+
+        .btn-submit:hover {
+            background-color: #00838c;
+            transform: translateY(-1px);
+        }
+
+        .footer-cta {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .footer-cta a {
+            color: #009ca6;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 2rem;
+            }
+            .hero-section {
+                padding-right: 0;
+                margin-bottom: 3rem;
+            }
+            .hero-desc {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .hero-actions {
+                justify-content: center;
+            }
+            .stats-grid {
+                justify-content: center;
+                gap: 2rem;
+            }
         }
     </style>
 
-    <!-- Background Layers -->
     <div class="pattern-bg"></div>
-    <div class="glow-overlay"></div>
-    <div class="top-glow"></div>
 
-    <div class="relative z-10 min-h-screen flex flex-col lg:flex-row">
+    <div class="main-container">
         <!-- Hero Section -->
-        <div class="hidden lg:flex flex-[1.2] flex-col justify-center px-16 xl:px-32 text-white animate-fade">
-            <div class="max-w-xl">
-                <div class="inline-block px-4 py-1 rounded-full bg-white/10 border border-white/20 text-[11px] font-bold mb-10 text-white/80">
-                    UIN SAIZU Purwokerto
+        <div class="hero-section">
+            <div class="badge-saizu">UIN SAIZU Purwokerto</div>
+            <h1 class="hero-title">
+                Sistem Informasi
+                <span class="highlight">Perjalanan Dinas</span>
+            </h1>
+            <p class="hero-desc">
+                Efisiensi Pengajuan dan Pelaporan Perjalanan Dinas UIN Saizu Purwokerto dengan sistem digital yang modern dan terintegrasi.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#" class="btn-lime">
+                    Pelajari Lebih Lanjut
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+                <a href="#" class="btn-outline">Panduan Pengguna</a>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>500+</h3>
+                    <p>Perjalanan Dinas</p>
                 </div>
-
-                <h1 class="text-[64px] font-black leading-[1.05] tracking-tight mb-6">
-                    Sistem Informasi <br />
-                    <span style="color: var(--saizu-lime);">Perjalanan Dinas</span>
-                </h1>
-
-                <p class="text-lg text-white/70 font-medium leading-relaxed mb-10">
-                    Efisiensi Pengajuan dan Pelaporan Perjalanan Dinas UIN Saizu Purwokerto dengan sistem digital yang modern dan terintegrasi.
-                </p>
-
-                <div class="flex items-center gap-4 mb-20">
-                    <a href="#" class="h-12 px-8 rounded-lg btn-lime flex items-center justify-center shadow-md">
-                        Pelajari Lebih Lanjut
-                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                    </a>
-                    <a href="#" class="h-12 px-8 rounded-lg border-2 border-white/40 text-white font-bold flex items-center justify-center hover:bg-white/10 transition-all">
-                        Panduan Pengguna
-                    </a>
+                <div class="stat-item">
+                    <h3>50+</h3>
+                    <p>Dosen & Staff</p>
                 </div>
-
-                <div class="grid grid-cols-3 gap-12">
-                    <div>
-                        <p class="text-4xl font-extrabold mb-1">500+</p>
-                        <p class="text-[11px] text-white/40 uppercase font-black tracking-widest">Perjalanan Dinas</p>
-                    </div>
-                    <div>
-                        <p class="text-4xl font-extrabold mb-1">50+</p>
-                        <p class="text-[11px] text-white/40 uppercase font-black tracking-widest">Dosen & Staff</p>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-                            <p class="text-4xl font-extrabold">99%</p>
-                        </div>
-                        <p class="text-[11px] text-white/40 uppercase font-black tracking-widest">Kepuasan</p>
-                    </div>
+                <div class="stat-item">
+                    <h3>99%</h3>
+                    <p>Kepuasan</p>
                 </div>
             </div>
         </div>
 
-        <!-- Login Card Section -->
-        <div class="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 animate-fade" style="animation-delay: 0.1s">
+        <!-- Login Section -->
+        <div class="login-card-wrapper">
             <div class="login-card">
-                <div class="text-center mb-10">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-20 mx-auto mb-6">
-                    <h2 class="text-2xl font-extrabold text-gray-900 mb-1">Login e-SPPD</h2>
-                    <p class="text-gray-500 text-sm font-medium">Masuk ke sistem perjalanan dinas</p>
-                </div>
+                <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="logo-img">
+                <h2 class="card-title">Login e-SPPD</h2>
+                <p class="card-subtitle">Masuk ke sistem perjalanan dinas</p>
 
                 @if (session('error'))
-                    <div class="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm font-bold text-center">
+                    <div style="background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 700;">
                         {{ session('error') }}
                     </div>
                 @endif
 
-                <form wire:submit="login" class="space-y-5">
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-700 ml-1">Username / NIP</label>
-                        <input wire:model="nip" type="text" required placeholder="Masukkan username atau NIP" class="input-saizu">
-                        @error('nip') <span class="text-xs text-red-500 font-medium ml-1">{{ $message }}</span> @enderror
+                <form wire:submit="login">
+                    <div class="form-group">
+                        <label class="form-label">Username / NIP</label>
+                        <input wire:model="nip" type="text" placeholder="Masukkan username atau NIP" class="form-input" required>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-gray-700 ml-1">Password</label>
-                        <div class="relative">
-                            <input wire:model="password" type="{{ $showPassword ? 'text' : 'password' }}" required placeholder="Masukkan password" class="input-saizu">
-                        </div>
-                        @error('password') <span class="text-xs text-red-500 font-medium ml-1">{{ $message }}</span> @enderror
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input wire:model="password" type="password" placeholder="Masukkan password" class="form-input" required>
                     </div>
 
-                    <div class="flex items-center justify-between pb-2">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="checkbox" wire:model="remember" class="w-4 h-4 rounded border-gray-300 text-[var(--saizu-teal)] focus:ring-[var(--saizu-teal)]">
-                            <span class="ml-2 text-xs font-semibold text-gray-500">Ingat saya</span>
+                    <div class="form-footer-links">
+                        <label class="remember-me">
+                            <input type="checkbox" wire:model="remember" style="margin: 0; width: 16px; height: 16px;">
+                            Ingat saya
                         </label>
-                        <a href="#" class="text-xs font-bold text-[var(--saizu-teal)] hover:underline">Lupa password?</a>
+                        <a href="#" class="forgot-link">Lupa password?</a>
                     </div>
 
-                    <button type="submit" wire:loading.attr="disabled" class="w-full h-12 btn-teal rounded-lg shadow-sm flex items-center justify-center gap-2">
+                    <button type="submit" class="btn-submit" wire:loading.attr="disabled">
                         <span wire:loading.remove>Masuk</span>
-                        <span wire:loading class="animate-spin h-5 w-5 border-2 border-white/50 border-t-white rounded-full"></span>
+                        <span wire:loading>Memproses...</span>
                     </button>
+                    
+                    <div class="footer-cta">
+                        Belum punya akun? <a href="#">Hubungi Admin</a>
+                    </div>
                 </form>
-
-                <div class="mt-8 text-center pt-8 border-t border-gray-100">
-                    <p class="text-gray-500 text-sm font-medium">
-                        Belum punya akun? <a href="#" class="text-[var(--saizu-teal)] font-bold hover:underline">Hubungi Admin</a>
-                    </p>
-                </div>
-            </div>
-
-            <!-- Mobile Attribution -->
-            <div class="mt-10 lg:fixed lg:bottom-6 lg:right-6 lg:mt-0">
-                <div class="bg-black/10 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-bold text-white/50">
-                    <span>Made by</span>
-                    <span class="text-white">Atoms</span>
-                    <div class="w-1.5 h-1.5 rounded-full bg-white/20"></div>
-                </div>
             </div>
         </div>
     </div>
