@@ -18,25 +18,31 @@ jobs:
           username: tholib_server
           password: ${{ secrets.SSH_PASSWORD }}
           port: 22
+          timeout: 120s
+          script_stop: true
           script: |
+            set -e
             cd /var/www/esppd
 
             echo "📥 Pulling latest code..."
-            git pull origin main
+            git pull origin main --quiet
 
             echo "📦 Installing dependencies..."
-            composer install --no-dev --optimize-autoloader
+            composer install --no-dev --optimize-autoloader --quiet 2>&1 | tail -3
 
             echo "🗄️  Running migrations..."
-            php artisan migrate --force
+            php artisan migrate --force --quiet
 
             echo "⚙️  Caching configuration..."
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            php artisan config:cache --quiet
+            php artisan route:cache --quiet
+            php artisan view:cache --quiet
 
             echo "⚡ Optimizing..."
-            php artisan optimize
+            php artisan optimize --quiet
+
+            echo "🧹 Clearing caches..."
+            php artisan cache:clear --quiet
 
             echo "✅ Deployment complete!"
             echo "Application: https://esppd.infiatin.cloud"
