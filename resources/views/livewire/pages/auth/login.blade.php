@@ -44,6 +44,12 @@ new #[Layout('layouts.login')] class extends Component
             $employee = Employee::where('nip', $this->nip)->first();
 
             if (!$employee) {
+                // Try if a user exists with this email/NIP directly
+                if (Auth::attempt(['email' => $this->nip . '@uinsaizu.ac.id', 'password' => $this->password], $this->remember)) {
+                    $this->finalizeLogin();
+                    return;
+                }
+                
                 throw ValidationException::withMessages([
                     'nip' => 'NIP tidak ditemukan dalam sistem.',
                 ]);
@@ -65,16 +71,7 @@ new #[Layout('layouts.login')] class extends Component
                 ]);
             }
 
-            Session::regenerate();
-
-            // Step 4: Check if user must change password on first login
-            $user = Auth::user();
-            if ($user && isset($user->is_password_reset) && !$user->is_password_reset) {
-                $this->redirect(route('auth.force-change-password', absolute: false), navigate: true);
-                return;
-            }
-
-            $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+            $this->finalizeLogin();
         } catch (ValidationException $e) {
             $this->isLoading = false;
             throw $e;
@@ -82,6 +79,20 @@ new #[Layout('layouts.login')] class extends Component
             $this->isLoading = false;
             session()->flash('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
+    }
+
+    private function finalizeLogin(): void
+    {
+        Session::regenerate();
+
+        // Step 4: Check if user must change password on first login
+        $user = Auth::user();
+        if ($user && isset($user->is_password_reset) && !$user->is_password_reset) {
+            $this->redirect(route('auth.force-change-password', absolute: false), navigate: true);
+            return;
+        }
+
+        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 
     /**
@@ -93,139 +104,246 @@ new #[Layout('layouts.login')] class extends Component
     }
 }; ?>
 
-<div class="flex-1 flex items-center justify-center p-6 lg:p-12 z-20 w-full min-h-screen bg-brand-teal">
-    <div class="w-full max-w-md">
-        <div class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-10 lg:p-14 relative overflow-hidden border border-white/20">
+<div class="selection:bg-brand-lime selection:text-black font-sans">
+    <style>
+        .login-vignette {
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
 
-            <!-- Internal glows -->
-            <div class="absolute -top-24 -right-24 w-64 h-64 bg-teal-500/10 blur-[80px] rounded-full"></div>
-            <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-lime-500/10 blur-[80px] rounded-full"></div>
+        .particle {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(1px);
+            pointer-events: none;
+        }
 
-            <!-- Header -->
-            <div class="relative text-center mb-12">
-                <div class="mb-8 flex justify-center">
-                    <div class="relative inline-block">
-                        <div class="absolute inset-x-0 bottom-0 h-4 bg-teal-500/20 blur-xl scale-125"></div>
-                        <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="relative w-auto h-24">
-                    </div>
-                </div>
-                <div class="space-y-3">
-                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">Login <span class="text-teal-600">e-SPPD</span></h2>
-                    <p class="text-gray-500 font-medium text-sm">Sistem Informasi Perjalanan Dinas</p>
-                </div>
+        @keyframes login-float {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(40px); opacity: 0; }
+        }
+
+        .animate-login-float { animation: login-float linear infinite; }
+
+        @keyframes fade-in-up {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up { animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fade-in { animation: fade-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+    </style>
+
+    <div class="min-h-screen flex flex-col lg:flex-row bg-brand-teal relative overflow-hidden">
+
+        <!-- Background Decor -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-br from-[#006D75] via-brand-teal to-[#006D75]"></div>
+            
+            <!-- Pattern -->
+            <div class="absolute inset-0 opacity-10 mix-blend-overlay"
+                style="background-image: url('{{ asset('images/pattern.png') }}'); background-size: cover; background-position: center;">
             </div>
 
-            @if (session('error'))
-                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-center gap-3 animate-shake">
-                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-red-700 text-sm font-medium">{{ session('error') }}</span>
-                </div>
-            @endif
+            <!-- Global Vignette -->
+            <div class="absolute inset-0 login-vignette"></div>
 
-            <form wire:submit="login" class="space-y-6 relative">
-                <!-- NIP -->
-                <div class="space-y-2">
-                    <label for="nip" class="text-sm font-bold text-gray-700 ml-1">NIP</label>
-                    <div class="relative group">
-                        <input wire:model.live="nip" id="nip" type="text" required autofocus
-                               inputmode="numeric" maxlength="18"
-                               class="w-full h-14 pl-14 pr-12 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all placeholder:text-gray-400 font-medium @error('nip') border-red-500 ring-4 ring-red-500/10 @enderror"
-                               placeholder="Masukkan NIP 18 digit"
-                        />
-                        <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-600 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        @error('nip')
-                            <div class="absolute right-5 top-1/2 -translate-y-1/2 text-red-500">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+            <!-- Floating Particles -->
+            @for ($i = 0; $i < 15; $i++)
+                <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: {{ rand(4, 10) }}px; height: {{ rand(4, 10) }}px;
+                            left: {{ rand(5, 95) }}%; top: {{ rand(5, 95) }}%;
+                            animation-duration: {{ rand(15, 25) }}s;
+                            animation-delay: {{ rand(0, 15) }}s;">
+                </div>
+            @endfor
+        </div>
+
+        <!-- Left Content (Hero) -->
+        <div class="hidden lg:flex flex-[1.2] flex-col justify-center px-24 xl:px-32 z-10 text-white">
+            <div class="max-w-xl animate-fade-in-up">
+                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-brand-lime text-xs font-bold mb-8 uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-lime mr-2 animate-pulse"></span>
+                    UIN SAIZU Purwokerto
+                </div>
+
+                <h1 class="text-6xl font-black leading-[1.1] tracking-tight mb-8">
+                    Sistem Informasi <br />
+                    <span class="text-brand-lime drop-shadow-sm">Perjalanan Dinas</span>
+                </h1>
+
+                <div class="h-1.5 w-24 bg-brand-lime mb-10 rounded-full"></div>
+
+                <p class="text-xl text-white/90 font-medium leading-relaxed mb-12">
+                    Transformasi digital pengajuan dan pelaporan perjalanan dinas di lingkungan UIN SAIZU yang lebih
+                    efisien, transparan, dan akuntabel.
+                </p>
+
+                <div class="flex items-center gap-6 mb-20">
+                    <a href="/guide"
+                        class="h-14 px-10 rounded-2xl bg-brand-lime text-black font-bold flex items-center shadow-lg hover:shadow-brand-lime/30 transition-all hover:-translate-y-1 active:scale-95">
+                        Pelajari Lebih Lanjut
+                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                    <a href="/guide"
+                        class="h-14 px-10 rounded-2xl border-2 border-white/30 text-white font-bold flex items-center hover:bg-white/10 transition-all active:scale-95">
+                        Panduan Pengguna
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-8 border-t border-white/10 pt-10">
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">500+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">Perjalanan<br />Dinas</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">50+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">Dosen &<br />Staff</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">99%</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">Tingkat<br />Kepuasan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Content (Login Card) -->
+        <div class="flex-1 flex items-center justify-center p-6 lg:p-12 z-20">
+            <div class="w-full max-w-md animate-fade-in">
+                <div class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-10 lg:p-14 relative overflow-hidden border border-white/20">
+
+                    <!-- Internal glows -->
+                    <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-teal/10 blur-[80px] rounded-full"></div>
+                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-lime/10 blur-[80px] rounded-full"></div>
+
+                    <!-- Header -->
+                    <div class="relative text-center mb-10">
+                        <div class="mb-8 flex justify-center">
+                            <div class="relative inline-block">
+                                <div class="absolute inset-x-0 bottom-0 h-4 bg-brand-teal/20 blur-xl scale-125"></div>
+                                <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="relative w-auto h-24">
                             </div>
-                        @else
-                            @if(strlen($nip) === 18 && is_numeric($nip))
-                                <div class="absolute right-5 top-1/2 -translate-y-1/2 text-emerald-500">
+                        </div>
+                        <div class="space-y-2">
+                            <h2 class="text-3xl font-black text-gray-900 tracking-tight">Login <span class="text-brand-teal">e-SPPD</span></h2>
+                            <p class="text-gray-500 font-semibold text-sm">Sistem Informasi Perjalanan Dinas</p>
+                        </div>
+                    </div>
+
+                    @if (session('error'))
+                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-center gap-3 animate-shake">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="text-red-700 text-sm font-medium">{{ session('error') }}</span>
+                        </div>
+                    @endif
+
+                    <form wire:submit="login" class="space-y-6 relative">
+                        <!-- NIP -->
+                        <div class="space-y-2">
+                            <label for="nip" class="text-sm font-bold text-gray-700 ml-1">Username / NIP</label>
+                            <div class="relative group">
+                                <input wire:model.live="nip" id="nip" type="text" required autofocus
+                                       inputmode="numeric" maxlength="18"
+                                       class="w-full h-14 pl-14 pr-12 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('nip') border-red-500 ring-4 ring-red-500/10 @enderror"
+                                       placeholder="Masukkan NIP"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
-                            @endif
-                        @enderror
-                    </div>
-                    @error('nip')
-                        <p class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @else
-                        <p class="text-xs text-gray-400 ml-1 font-medium">NIP 18 digit (contoh: 1983...)</p>
-                    @enderror
-                </div>
-
-                <!-- Password -->
-                <div class="space-y-2">
-                    <label for="password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
-                    <div class="relative group">
-                        <input wire:model="password" id="password" type="{{ $showPassword ? 'text' : 'password' }}" required
-                               class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all placeholder:text-gray-400 font-medium @error('password') border-red-500 ring-4 ring-red-500/10 @enderror"
-                               placeholder="Masukkan password"
-                        />
-                        <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-teal-600 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
+                                @error('nip')
+                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                @enderror
+                            </div>
+                            @error('nip')
+                                <p class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1 animate-fade-in">
+                                    {{ $message }}
+                                </p>
+                            @enderror
                         </div>
-                        <button type="button" wire:click="togglePasswordVisibility" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-teal-600 transition-colors focus:outline-none">
-                            @if($showPassword)
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+
+                        <!-- Password -->
+                        <div class="space-y-2">
+                            <label for="password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
+                            <div class="relative group">
+                                <input wire:model="password" id="password" type="{{ $showPassword ? 'text' : 'password' }}" required
+                                       class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('password') border-red-500 ring-4 ring-red-500/10 @enderror"
+                                       placeholder="Masukkan password"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <button type="button" wire:click="togglePasswordVisibility" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-teal transition-colors focus:outline-none">
+                                    @if($showPassword)
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                        </svg>
+                                    @else
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    @endif
+                                </button>
+                            </div>
+                            @error('password')
+                                <p class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1 animate-fade-in">
+                                    {{ $message }}
+                                </p>
+                            @enderror
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="checkbox" wire:model="remember" class="w-5 h-5 rounded-lg border-gray-200 text-brand-teal focus:ring-brand-teal/20">
+                                <span class="ml-3 text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Ingat saya</span>
+                            </label>
+                            <a href="{{ route('password.request') }}" class="text-sm font-bold text-brand-teal hover:text-brand-dark hover:underline decoration-2 underline-offset-4 px-1 transition-all">Lupa password?</a>
+                        </div>
+
+                        <button type="submit" wire:loading.attr="disabled"
+                            class="w-full h-14 bg-gradient-to-r from-brand-teal to-[#006D75] text-white font-black rounded-2xl shadow-lg hover:shadow-brand-teal/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
+                            <span wire:loading.remove>Masuk ke Dashboard</span>
+                            <span wire:loading class="flex items-center gap-2">
+                                <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                                 </svg>
-                            @else
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            @endif
+                                Memproses...
+                            </span>
                         </button>
+                    </form>
+
+                    <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-3">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center">Terintegrasi Dengan</p>
+                        <div class="flex items-center gap-4 opacity-70 font-black text-sm text-gray-600 uppercase tracking-tighter">
+                            <span>UIN SAIZU</span>
+                            <div class="w-1.5 h-1.5 bg-brand-lime rounded-full"></div>
+                            <span>PUSKOM</span>
+                        </div>
+                        <p class="text-[10px] text-gray-400 mt-2">UIN SAIZU Purwokerto © {{ date('Y') }}</p>
                     </div>
-                    @error('password')
-                        <p class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {{ $message }}
-                        </p>
-                    @enderror
                 </div>
-
-                <div class="flex items-center justify-between pt-1">
-                    <label class="flex items-center cursor-pointer group">
-                        <input type="checkbox" wire:model="remember" class="w-5 h-5 rounded-lg border-gray-200 text-teal-600 focus:ring-teal-500/20">
-                        <span class="ml-3 text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Ingat saya</span>
-                    </label>
-                    <a href="{{ route('password.request') }}" class="text-sm font-bold text-teal-600 hover:text-teal-700 hover:underline decoration-2 underline-offset-4 px-1 transition-all">Lupa password?</a>
-                </div>
-
-                <button type="submit" wire:loading.attr="disabled"
-                    class="w-full h-14 bg-gradient-to-r from-teal-600 to-teal-800 text-white font-black rounded-2xl shadow-lg hover:shadow-teal-600/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
-                    <span wire:loading.remove>Masuk ke Dashboard</span>
-                    <span wire:loading class="flex items-center gap-2">
-                        <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                        </svg>
-                        Memproses...
-                    </span>
-                </button>
-            </form>
-
-            <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-3">
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center">UIN SAIZU Purwokerto © {{ date('Y') }}</p>
             </div>
         </div>
     </div>
