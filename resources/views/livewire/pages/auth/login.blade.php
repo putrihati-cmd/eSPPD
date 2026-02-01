@@ -232,19 +232,32 @@ new #[Layout('layouts.guest')] class extends Component {
                         <div class="space-y-2">
                             <label for="nip" class="text-sm font-bold text-gray-700 ml-1">Username / NIP</label>
                             <div class="relative group">
-                                <input wire:model="nip" id="nip" type="text" name="nip" required autofocus
-                                    class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium"
-                                    placeholder="Masukkan NIP" />
-                                <div
-                                    class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                <input wire:model.debounce.400ms="nip" id="nip" type="text" name="nip" required autofocus
+                                    inputmode="numeric" pattern="[0-9]*" maxlength="18"
+                                    class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('nip') border-red-500 ring-2 ring-red-200 @enderror"
+                                    placeholder="Masukkan NIP (angka saja)" aria-invalid="@error('nip')true@enderror" aria-describedby="nip-error nip-help" autocomplete="username"
+                                    @keydown="if (!/^[0-9]$/.test($event.key) && $event.key !== 'Backspace' && $event.key !== 'Tab') $event.preventDefault();"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
                                 </div>
+                                @error('nip')
+                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                @enderror
                             </div>
+                            <p id="nip-help" class="text-xs text-gray-400 ml-1">NIP hanya angka, tanpa spasi atau tanda baca.</p>
                             @error('nip')
-                                <p class="text-xs text-red-500 font-bold ml-1">{{ $message }}</p>
+                                <p id="nip-error" class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    {{ $message }}
+                                </p>
                             @enderror
                         </div>
 
@@ -252,19 +265,21 @@ new #[Layout('layouts.guest')] class extends Component {
                         <div class="space-y-2">
                             <label for="password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
                             <div class="relative group">
-                                <input wire:model="password" id="password"
-                                    type="{{ $showPassword ? 'text' : 'password' }}" name="password" required
-                                    class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium"
-                                    placeholder="Masukkan password" />
-                                <div
-                                    class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                <input wire:model.debounce.400ms="password" id="password"
+                                    type="{{ $showPassword ? 'text' : 'password' }}" name="password" required minlength="8"
+                                    class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium @error('password') border-red-500 ring-2 ring-red-200 @enderror"
+                                    placeholder="Masukkan password minimal 8 karakter" aria-invalid="@error('password')true@enderror" aria-describedby="password-error password-help" autocomplete="current-password"
+                                    onpaste="return false;"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
                                 <button type="button" wire:click="togglePasswordVisibility"
-                                    class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-teal transition-colors">
+                                    class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-teal transition-colors"
+                                    aria-label="Tampilkan/sembunyikan password">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         @if ($showPassword)
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -277,10 +292,24 @@ new #[Layout('layouts.guest')] class extends Component {
                                         @endif
                                     </svg>
                                 </button>
+                                @error('password')
+                                    <div class="absolute right-14 top-1/2 -translate-y-1/2 text-red-500">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                @enderror
                             </div>
+                            <p id="password-help" class="text-xs text-gray-400 ml-1">Password minimal 8 karakter, kombinasi huruf & angka disarankan.</p>
+                            @error('password')
+                                <p id="password-error" class="text-xs text-red-500 font-bold ml-1 flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    {{ $message }}
+                                </p>
+                            @enderror
                         </div>
 
-                        <div class="flex items-center justify-between pt-1">
+                        <div class="flex flex-col sm:flex-row items-center justify-between pt-1 gap-2 sm:gap-0">
                             <label class="flex items-center cursor-pointer group">
                                 <input type="checkbox" wire:model="remember"
                                     class="w-5 h-5 rounded-lg border-gray-200 text-brand-teal focus:ring-brand-teal/20">
@@ -288,17 +317,26 @@ new #[Layout('layouts.guest')] class extends Component {
                                     class="ml-3 text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Ingat
                                     saya</span>
                             </label>
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}"
-                                    class="text-sm font-bold text-brand-teal hover:underline decoration-2 underline-offset-4">Lupa
-                                    password?</a>
-                            @endif
+                            <div class="flex flex-col items-end gap-1">
+                                @if (Route::has('password.request'))
+                                    <a href="{{ route('password.request') }}"
+                                        class="text-sm font-bold text-brand-teal hover:underline decoration-2 underline-offset-4">Lupa
+                                        password?</a>
+                                @endif
+                                <a href="#bantuan" class="text-xs text-gray-400 hover:text-brand-lime font-medium underline underline-offset-2">Butuh bantuan login?</a>
+                            </div>
                         </div>
 
                         <button type="submit" wire:loading.attr="disabled"
-                            class="w-full h-14 bg-gradient-to-r from-brand-teal to-brand-dark text-white font-black rounded-2xl shadow-lg hover:shadow-brand-teal/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait">
+                            class="w-full h-14 bg-gradient-to-r from-brand-teal to-brand-dark text-white font-black rounded-2xl shadow-lg hover:shadow-brand-teal/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
                             <span wire:loading.remove>Masuk ke Dashboard</span>
-                            <span wire:loading>Memproses...</span>
+                            <span wire:loading>
+                                <svg class="w-5 h-5 animate-spin mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                </svg>
+                                Memproses...
+                            </span>
                         </button>
                     </form>
 
