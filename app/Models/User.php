@@ -31,6 +31,8 @@ class User extends Authenticatable
         'role',
         'role_id',      // RBAC.md: FK to roles table
         'permissions',  // RBAC.md: Custom permissions JSON
+        'is_password_reset',
+        'last_password_reset',
     ];
 
     /**
@@ -54,6 +56,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'permissions' => 'array',
+            'is_password_reset' => 'boolean',
+            'last_password_reset' => 'datetime',
         ];
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class Spd extends Model
 {
@@ -49,6 +50,10 @@ class Spd extends Model
         'rejected_at',
         'rejected_by',
         'previous_approver_nip',
+        'spt_generated_at',
+        'spd_generated_at',
+        'spt_file_path',
+        'spd_file_path',
     ];
 
     public function followers(): HasMany
@@ -223,4 +228,35 @@ class Spd extends Model
         return $query->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year);
     }
+
+    /**
+     * State Machine Pattern (from md/2.md)
+     */
+    public function transitionTo(string $newState, string $actorNip): void
+    {
+        $allowed = match($this->status) {
+            'draft' => ['submitted', 'deleted'],
+            'submitted' => ['approved', 'rejected', 'cancelled'],
+            'approved' => ['completed', 'cancelled'],
+            'rejected' => ['draft', 'deleted'],
+            default => []
+        };
+        
+        if (!in_array($newState, $allowed)) {
+            Log::warning("Invalid state transition attempted: {$this->status} -> {$newState}", [
+                'spd_id' => $this->id,
+                'actor' => $actorNip
+            ]);
+            // For now, we allow it but log it, or throw exception if strict
+            // throw new \Exception("Invalid state transition");
+        }
+        
+        $this->update([
+            'status' => $newState,
+            'current_approver_nip' => $newState === 'approved' ? null : $this->current_approver_nip,
+        ]);
+        
+        // Emit logic could go here
+    }
 }
+

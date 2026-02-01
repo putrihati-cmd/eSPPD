@@ -6,7 +6,10 @@ Generates DOCX documents from templates using docxtpl.
 import uuid
 from pathlib import Path
 from datetime import datetime
+import logging
 from docxtpl import DocxTemplate
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentGenerator:
@@ -66,12 +69,31 @@ class DocumentGenerator:
             Path to the generated PDF file
         """
         import subprocess
+        import os
         
         pdf_path = docx_path.with_suffix('.pdf')
         
+        # Common LibreOffice paths on Windows
+        soffice_paths = [
+            'soffice', # If in PATH
+            r'C:\Program Files\LibreOffice\program\soffice.exe',
+            r'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+            r'C:\laragon\bin\libreoffice\program\soffice.exe',
+        ]
+        
+        soffice_bin = None
+        for path in soffice_paths:
+            if path != 'soffice' and os.path.exists(path):
+                soffice_bin = path
+                break
+        
+        if not soffice_bin:
+            soffice_bin = 'soffice'
+
         try:
+            logger.info(f"Converting {docx_path} to PDF using {soffice_bin}")
             subprocess.run([
-                'soffice',
+                soffice_bin,
                 '--headless',
                 '--convert-to', 'pdf',
                 '--outdir', str(docx_path.parent),
@@ -80,6 +102,8 @@ class DocumentGenerator:
             
             return pdf_path
         except subprocess.CalledProcessError as e:
+            logger.error(f"PDF conversion failed: {e.stderr.decode()}")
             raise RuntimeError(f"PDF conversion failed: {e.stderr.decode()}")
         except FileNotFoundError:
-            raise RuntimeError("LibreOffice not found. Please install LibreOffice for PDF conversion.")
+            logger.error("LibreOffice (soffice) not found in common paths.")
+            raise RuntimeError("LibreOffice not found. Please install LibreOffice and add 'soffice' to PATH.")

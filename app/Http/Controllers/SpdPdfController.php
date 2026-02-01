@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Spd;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PythonDocumentService;
+use Illuminate\Http\Response;
 
 class SpdPdfController extends Controller
 {
+    protected $pythonService;
+
+    public function __construct(PythonDocumentService $pythonService)
+    {
+        $this->pythonService = $pythonService;
+    }
 
     public function downloadSpt(Spd $spd)
     {
@@ -16,12 +23,16 @@ class SpdPdfController extends Controller
             return $this->downloadZip($spd, 'spt');
         }
         
-        $pdf = Pdf::loadView('pdf.spt', [
-            'spd' => $spd,
-        ])->setPaper('a4', 'portrait');
+        $pdfContent = $this->pythonService->getSptPdf($spd);
         
+        if (!$pdfContent) {
+            return back()->with('error', 'Gagal generate SPT via Document Service.');
+        }
+
         $filename = "SPT-" . str_replace(['/', '\\'], '-', $spd->spt_number) . ".pdf";
-        return $pdf->download($filename);
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
     
     public function downloadSpd(Spd $spd)
@@ -32,12 +43,16 @@ class SpdPdfController extends Controller
             return $this->downloadZip($spd, 'spd');
         }
         
-        $pdf = Pdf::loadView('pdf.spd', [
-            'spd' => $spd,
-        ])->setPaper('a4', 'portrait');
+        $pdfContent = $this->pythonService->getSpdPdf($spd);
         
+        if (!$pdfContent) {
+            return back()->with('error', 'Gagal generate SPD via Document Service.');
+        }
+
         $filename = "SPD-" . str_replace(['/', '\\'], '-', $spd->spd_number) . ".pdf";
-        return $pdf->download($filename);
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
     
     protected function downloadZip(Spd $spd, string $type)
@@ -49,21 +64,16 @@ class SpdPdfController extends Controller
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
             
             // 1. Add Main Employee Document
-            $pdfContent = Pdf::loadView("pdf.{$type}", ['spd' => $spd])->setPaper('a4', 'portrait')->output();
+            $pdfContent = ($type === 'spt') ? $this->pythonService->getSptPdf($spd) : $this->pythonService->getSpdPdf($spd);
             $filename = "Utama-" . $spd->employee->name . ".pdf";
             $zip->addFromString($filename, $pdfContent);
             
             // 2. Add Followers Documents
             foreach ($spd->followers as $follower) {
-                // Clone SPD and limit relations to avoid side effects (though clone is shallow for models)
-                // Better to simple temporarily swap the employee relation
                 $followerSpd = clone $spd;
                 $followerSpd->setRelation('employee', $follower->employee);
                 
-                // For SPD, costs might need adjustment (e.g. followers might not get transport cost if shared?)
-                // For now, assuming full entitlement or copied entitlement as per requirement "generate for each"
-                
-                $pdfContent = Pdf::loadView("pdf.{$type}", ['spd' => $followerSpd])->setPaper('a4', 'portrait')->output();
+                $pdfContent = ($type === 'spt') ? $this->pythonService->getSptPdf($followerSpd) : $this->pythonService->getSpdPdf($followerSpd);
                 $filename = "Pengikut-" . $follower->employee->name . ".pdf";
                 $zip->addFromString($filename, $pdfContent);
             }
@@ -78,23 +88,32 @@ class SpdPdfController extends Controller
     {
         $spd->load(['employee', 'unit', 'budget']);
         
-        $pdf = Pdf::loadView('pdf.spt', [
-            'spd' => $spd,
-        ])->setPaper('a4', 'portrait');
+        $pdfContent = $this->pythonService->getSptPdf($spd);
         
+        if (!$pdfContent) {
+            return response('Gagal generate SPT', 500);
+        }
+
         $filename = "SPT-" . str_replace(['/', '\\'], '-', $spd->spt_number) . ".pdf";
-        return $pdf->stream($filename);
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "inline; filename=\"{$filename}\"");
     }
     
     public function viewSpd(Spd $spd)
     {
         $spd->load(['employee', 'unit', 'budget', 'costs']);
         
-        $pdf = Pdf::loadView('pdf.spd', [
-            'spd' => $spd,
-        ])->setPaper('a4', 'portrait');
+        $pdfContent = $this->pythonService->getSpdPdf($spd);
         
+        if (!$pdfContent) {
+            return response('Gagal generate SPD', 500);
+        }
+
         $filename = "SPD-" . str_replace(['/', '\\'], '-', $spd->spd_number) . ".pdf";
-        return $pdf->stream($filename);
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "inline; filename=\"{$filename}\"");
     }
 }
+

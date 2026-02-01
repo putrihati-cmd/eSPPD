@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang='id'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Login e-SPPD</title>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap' rel='stylesheet'>
+    <link rel="preload" as="style" href="https://esppd.infiatin.cloud/build/assets/app-DKTKiBDV.css" /><link rel="modulepreload" as="script" href="https://esppd.infiatin.cloud/build/assets/app-DIuewKhF.js" /><link rel="stylesheet" href="https://esppd.infiatin.cloud/build/assets/app-DKTKiBDV.css" data-navigate-track="reload" /><script type="module" src="https://esppd.infiatin.cloud/build/assets/app-DIuewKhF.js" data-navigate-track="reload"></script>    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <!-- Livewire Styles --><style >[wire\:loading][wire\:loading], [wire\:loading\.delay][wire\:loading\.delay], [wire\:loading\.inline-block][wire\:loading\.inline-block], [wire\:loading\.inline][wire\:loading\.inline], [wire\:loading\.block][wire\:loading\.block], [wire\:loading\.flex][wire\:loading\.flex], [wire\:loading\.table][wire\:loading\.table], [wire\:loading\.grid][wire\:loading\.grid], [wire\:loading\.inline-flex][wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.none][wire\:loading\.delay\.none], [wire\:loading\.delay\.shortest][wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter][wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short][wire\:loading\.delay\.short], [wire\:loading\.delay\.default][wire\:loading\.delay\.default], [wire\:loading\.delay\.long][wire\:loading\.delay\.long], [wire\:loading\.delay\.longer][wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest][wire\:loading\.delay\.longest] {display: none;}[wire\:offline][wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}:root {--livewire-progress-bar-color: #2299dd;}[x-cloak] {display: none !important;}[wire\:cloak] {display: none !important;}dialog#livewire-error::backdrop {background-color: rgba(0, 0, 0, .6);}</style>
+</head>
+
+<body class='flex items-center justify-center min-h-screen bg-brand-teal'>
+    <div wire:snapshot="{&quot;data&quot;:{&quot;form&quot;:[{&quot;email&quot;:&quot;&quot;,&quot;password&quot;:&quot;&quot;,&quot;remember&quot;:false},{&quot;class&quot;:&quot;App\\Livewire\\Forms\\LoginForm&quot;,&quot;s&quot;:&quot;form&quot;}]},&quot;memo&quot;:{&quot;id&quot;:&quot;eMhf6wTxyPiqKX2xEohb&quot;,&quot;name&quot;:&quot;pages.auth.login&quot;,&quot;path&quot;:&quot;login&quot;,&quot;method&quot;:&quot;GET&quot;,&quot;release&quot;:&quot;a-a-a&quot;,&quot;children&quot;:[],&quot;scripts&quot;:[],&quot;assets&quot;:[],&quot;errors&quot;:[],&quot;locale&quot;:&quot;id&quot;},&quot;checksum&quot;:&quot;224fee70f962ba0ccb813aa9b2ed90b9ed85c8032161ea3401a5ee41da8c653d&quot;}" wire:effects="[]" wire:id="eMhf6wTxyPiqKX2xEohb" class="selection:bg-brand-lime selection:text-black">
+    <style>
+        .login-vignette {
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 9999px;
+            filter: blur(1px);
+            pointer-events: none;
+        }
+
+        @keyframes login-float {
+            0% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: translateY(-100vh) translateX(40px);
+                opacity: 0;
+            }
+        }
+
+        .animate-login-float {
+            animation: login-float linear infinite;
+        }
+
+        @keyframes fade-in-up {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fade-in-up 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-fade-in {
+            animation: fade-in 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+
+    <div
+        class="min-h-screen flex flex-col lg:flex-row bg-brand-teal relative overflow-hidden font-sans">
+
+        <!-- Background Decor -->
+        <div class="absolute inset-0 z-0">
+            <!-- Gradient Base -->
+            <div class="absolute inset-0 bg-gradient-to-br from-brand-dark via-brand-teal to-brand-dark"></div>
+
+            <!-- Pattern -->
+            <div class="absolute inset-0 opacity-10 mix-blend-overlay"
+                style="background-image: url('https://esppd.infiatin.cloud/images/pattern.png'); background-size: cover; background-position: center;">
+            </div>
+
+            <!-- Global Vignette -->
+            <div class="absolute inset-0 login-vignette"></div>
+
+            <!-- Floating Particles -->
+            <!--[if BLOCK]><![endif]-->                <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 8px; height: 8px;
+                            left: 42%; top: 6%;
+                            animation-duration: 16s;
+                            animation-delay: 12s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 4px; height: 10px;
+                            left: 71%; top: 80%;
+                            animation-duration: 16s;
+                            animation-delay: 7s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 5px; height: 6px;
+                            left: 77%; top: 71%;
+                            animation-duration: 25s;
+                            animation-delay: 12s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 4px; height: 8px;
+                            left: 52%; top: 70%;
+                            animation-duration: 20s;
+                            animation-delay: 10s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 6px; height: 6px;
+                            left: 61%; top: 66%;
+                            animation-duration: 20s;
+                            animation-delay: 3s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 5px; height: 4px;
+                            left: 80%; top: 38%;
+                            animation-duration: 18s;
+                            animation-delay: 4s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 10px; height: 8px;
+                            left: 45%; top: 13%;
+                            animation-duration: 16s;
+                            animation-delay: 1s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 4px; height: 9px;
+                            left: 15%; top: 75%;
+                            animation-duration: 15s;
+                            animation-delay: 5s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 7px; height: 4px;
+                            left: 78%; top: 92%;
+                            animation-duration: 22s;
+                            animation-delay: 14s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 8px; height: 5px;
+                            left: 19%; top: 29%;
+                            animation-duration: 17s;
+                            animation-delay: 10s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 9px; height: 5px;
+                            left: 92%; top: 58%;
+                            animation-duration: 15s;
+                            animation-delay: 5s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 6px; height: 7px;
+                            left: 81%; top: 46%;
+                            animation-duration: 16s;
+                            animation-delay: 13s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 5px; height: 10px;
+                            left: 66%; top: 47%;
+                            animation-duration: 20s;
+                            animation-delay: 7s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 4px; height: 9px;
+                            left: 46%; top: 55%;
+                            animation-duration: 22s;
+                            animation-delay: 12s;">
+                </div>
+                            <div class="particle bg-brand-lime/40 animate-login-float"
+                    style="width: 10px; height: 5px;
+                            left: 90%; top: 61%;
+                            animation-duration: 17s;
+                            animation-delay: 15s;">
+                </div>
+            <!--[if ENDBLOCK]><![endif]-->        </div>
+
+        <!-- Left Content (Hero) -->
+        <div class="hidden lg:flex flex-[1.2] flex-col justify-center px-24 xl:px-32 z-10 text-white">
+            <div class="max-w-xl animate-fade-in-up">
+                <div
+                    class="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-brand-lime text-xs font-bold mb-8 uppercase tracking-widest">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-lime mr-2 animate-pulse"></span>
+                    UIN SAIZU Purwokerto
+                </div>
+
+                <h1 class="text-6xl font-black leading-[1.05] tracking-tight mb-8">
+                    Sistem Informasi <br />
+                    <span class="text-brand-lime drop-shadow-sm">Perjalanan Dinas</span>
+                </h1>
+
+                <div class="h-1.5 w-24 bg-brand-lime mb-10 rounded-full"></div>
+
+                <p class="text-xl text-white/90 font-medium leading-relaxed mb-12">
+                    Transformasi digital pengajuan dan pelaporan perjalanan dinas di lingkungan UIN SAIZU yang lebih
+                    efisien, transparan, dan akuntabel.
+                </p>
+
+                <div class="flex items-center gap-6 mb-20">
+                    <a href="/about"
+                        class="h-14 px-10 rounded-2xl bg-brand-lime text-black font-bold flex items-center shadow-lg hover:shadow-brand-lime/30 transition-all hover:-translate-y-1 active:scale-95">
+                        Pelajari Lebih Lanjut
+                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+                    <a href="/guide"
+                        class="h-14 px-10 rounded-2xl border-2 border-white/30 text-white font-bold flex items-center hover:bg-white/10 transition-all active:scale-95">
+                        Panduan Pengguna
+                    </a>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-3 gap-8 border-t border-white/10 pt-10">
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">500+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">
+                            Perjalanan<br />Dinas</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">50+</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">Dosen
+                            &<br />Staff</p>
+                    </div>
+                    <div>
+                        <p class="text-4xl font-black text-brand-lime mb-1">99%</p>
+                        <p class="text-xs text-white/60 uppercase font-bold tracking-widest leading-tight">
+                            Tingkat<br />Kepuasan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Content (Login Card) -->
+        <div class="flex-1 flex items-center justify-center p-6 lg:p-12 z-20">
+            <div class="w-full max-w-md animate-fade-in">
+                <div
+                    class="bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-xl p-10 lg:p-14 relative overflow-hidden border border-white/20">
+
+                    <!-- Internal glows -->
+                    <div class="absolute -top-24 -right-24 w-64 h-64 bg-brand-teal/10 blur-[80px] rounded-full"></div>
+                    <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-lime/10 blur-[80px] rounded-full"></div>
+
+                    <!-- Header -->
+                    <div class="relative text-center mb-12">
+                        <div class="mb-8 flex justify-center">
+                            <div class="relative inline-block">
+                                <div class="absolute inset-x-0 bottom-0 h-4 bg-brand-teal/20 blur-xl scale-125"></div>
+                                <img src="https://esppd.infiatin.cloud/images/logo.png" alt="Logo UIN SAIZU" class="relative w-auto"
+                                    style="height: 96px; min-height: 96px; max-height: 96px;">
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <h2 class="text-4xl font-black text-gray-900 tracking-tight">Login <span
+                                    class="text-brand-teal">e-SPPD</span></h2>
+                            <p class="text-gray-500 font-medium">Sistem Informasi Perjalanan Dinas</p>
+                        </div>
+                    </div>
+
+                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                    <form wire:submit="login" class="space-y-6 relative">
+                        <!-- NIP -->
+                        <div class="space-y-2">
+                            <label for="form.email" class="text-sm font-bold text-gray-700 ml-1">Username / NIP</label>
+                            <div class="relative group">
+                                <input wire:model="form.email" id="form.email" type="text" name="nip" required autofocus
+                                      class="w-full h-14 pl-14 pr-5 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium "
+                                      placeholder="Masukkan NIP (angka saja)" aria-invalid="false" autocomplete="username"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                            </div>
+                            <p class="text-xs text-gray-400 ml-1">NIP hanya angka, tanpa spasi atau tanda baca.</p>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                        </div>
+
+                        <!-- Password -->
+                        <div class="space-y-2">
+                            <label for="form.password" class="text-sm font-bold text-gray-700 ml-1">Password</label>
+                            <div class="relative group">
+                                <input
+                                      wire:model="form.password"
+                                      id="form.password"
+                                      type="password"
+                                      name="password"
+                                      required
+                                      class="w-full h-14 pl-14 pr-14 bg-gray-50 border-2 border-gray-100 rounded-2xl focus:border-brand-teal focus:ring-4 focus:ring-brand-teal/10 transition-all placeholder:text-gray-400 font-medium "
+                                      placeholder="Masukkan password minimal 8 karakter"
+                                      autocomplete="current-password"
+                                />
+                                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-teal transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+                                <button
+                                    type="button"
+                                    onclick="togglePasswordVisibility()"
+                                    class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-teal transition-colors focus:outline-none"
+                                    aria-label="Tampilkan/Sembunyikan password"
+                                    style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                                >
+                                    <svg class="w-6 h-6 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path id="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path id="eye-open2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        <path id="eye-closed" style="display:none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                    </svg>
+                                </button>
+                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                            </div>
+                            <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-between pt-1 gap-2 sm:gap-0">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="checkbox" wire:model="form.remember"
+                                    class="w-5 h-5 rounded-lg border-gray-200 text-brand-teal focus:ring-brand-teal/20">
+                                <span
+                                    class="ml-3 text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors">Ingat
+                                    saya</span>
+                            </label>
+                            <div class="flex flex-col items-end gap-1">
+                                <!--[if BLOCK]><![endif]-->                                    <a href="https://esppd.infiatin.cloud/forgot-password"
+                                        class="text-sm font-bold text-brand-teal hover:underline decoration-2 underline-offset-4">Lupa
+                                        password?</a>
+                                <!--[if ENDBLOCK]><![endif]-->                                <a href="https://wa.me/6281234567890?text=Halo%20Admin%20IT%2C%20saya%20butuh%20bantuan%20login%20eSPPD" target="_blank" rel="noopener" class="text-xs text-gray-400 hover:text-brand-lime font-medium underline underline-offset-2">Butuh bantuan login?</a>
+                            </div>
+                        </div>
+
+                        <button type="submit" wire:loading.attr="disabled"
+                            class="w-full h-14 bg-gradient-to-r from-brand-teal to-brand-dark text-white font-black rounded-2xl shadow-lg hover:shadow-brand-teal/30 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2">
+                            <span wire:loading.remove>Masuk ke Dashboard</span>
+                            <span wire:loading>
+                                <svg class="w-5 h-5 animate-spin mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                </svg>
+                                Memproses...
+                            </span>
+                        </button>
+                    </form>
+
+                    <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col items-center gap-3">
+                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Terintegrasi dengan
+                        </p>
+                        <div class="flex items-center gap-4 opacity-50 font-black text-sm text-gray-900">
+                            <span>UIN SAIZU</span>
+                            <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                            <span>PUSKOM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10">
+                    <p class="text-white/60 text-sm font-medium">Bantuan? <a href="/cdn-cgi/l/email-protection#b6c5c3c6c6d9c4c2f6c3dfd8c5d7dfccc398d7d598dfd289c5c3d4dcd3d5c28bf4d7d8c2c3d7d8938486fad9d1dfd8938486d3e5e6e6f2" class="text-brand-lime font-bold hover:underline">Hubungi Admin IT</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+        function togglePasswordVisibility() {
+            const input = document.getElementById('form.password');
+            const eyeOpen = document.getElementById('eye-open');
+            const eyeOpen2 = document.getElementById('eye-open2');
+            const eyeClosed = document.getElementById('eye-closed');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (eyeOpen) eyeOpen.style.display = 'none';
+                if (eyeOpen2) eyeOpen2.style.display = 'none';
+                if (eyeClosed) eyeClosed.style.display = '';
+            } else {
+                input.type = 'password';
+                if (eyeOpen) eyeOpen.style.display = '';
+                if (eyeOpen2) eyeOpen2.style.display = '';
+                if (eyeClosed) eyeClosed.style.display = 'none';
+            }
+        }
+    </script>
+</div>
+        <!-- Livewire Scripts -->
+<script src="/livewire/livewire.js?id=61e33937"   data-csrf="7Nf9lMkhCuEfC1Cq9wOF4IR5Sasy6328bN4nJQTH" data-update-uri="/livewire/update" data-navigate-once="true"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"45fbd8ad08e74ee1af283ff7b191e181","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+
+</html>

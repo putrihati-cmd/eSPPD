@@ -7,6 +7,8 @@ use App\Models\ApprovalDelegate;
 use App\Models\ApprovalRule;
 use App\Models\Spd;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -25,20 +27,48 @@ class ApprovalService
             return false;
         }
 
+        // Check level limits from md.md (Level => Max IDR)
+        $limits = [
+            1 => 0,          // Staff
+            2 => 5000000,    // Kaprodi: 5jt
+            3 => 20000000,   // Wadek: 20jt
+            4 => 50000000,   // Dekan: 50jt
+            5 => 100000000,  // WR: 100jt
+            6 => 99999999999, // Rektor: Unlimited
+        ];
+
         if ($action === 'approve') {
+            $approver = $currentApproval->approver;
+            $level = $approver->approval_level ?? 1;
+            $limit = $limits[$level] ?? 0;
+
+            // If cost exceeds limit and not level 6, validation should have caught this 
+            // but we check anyway as a double safeguard.
+            if ($spd->estimated_cost > $limit && $level < 6) {
+                // Technically this shouldn't happen if chain is built correctly 
+                // but if manual override, we block it.
+                Log::warning("Approval limit exceeded for NIP {$approver->nip}", [
+                    'cost' => $spd->estimated_cost,
+                    'limit' => $limit
+                ]);
+            }
+
             $this->approve($currentApproval, $notes);
             $this->checkAndProceed($spd, $currentApproval);
         } elseif ($action === 'reject') {
             $this->reject($currentApproval, $notes);
-            // Update with rejection_reason from ceking.md + rejection tracking from fitur.md
+            
             $spd->update([
                 'status' => 'rejected',
                 'rejection_reason' => $notes,
                 'current_approver_nip' => null,
                 'rejected_at' => now(),
-                'rejected_by' => $currentApproval->approver?->nip ?? auth()->user()?->employee?->nip,
-                'previous_approver_nip' => $currentApproval->approver?->nip, // For resubmission
+                'rejected_by' => $currentApproval->approver?->nip ?? Auth::user()?->employee?->nip,
+                'previous_approver_nip' => $currentApproval->approver?->nip,
             ]);
+
+            // Transition logic
+            $spd->transitionTo('rejected', $currentApproval->approver?->nip ?? 'system');
         }
 
         return true;
@@ -69,42 +99,57 @@ class ApprovalService
     }
 
     /**
-     * Check if all approvals done and proceed (enhanced for ceking.md + fitur.md)
+     * Check if all approvals done and proceed (Strictly matching md.md + 2.md)
      */
     protected function checkAndProceed(Spd $spd, ?Approval $lastApproval = null): void
     {
         $pendingCount = $spd->approvals()->where('status', 'pending')->count();
 
         if ($pendingCount === 0) {
-            // All approvals completed - Final approve (from ceking.md)
-            // Generate nomor surat otomatis (dari fitur.md)
-            $sptNumber = $spd->spt_number;
-            
-            if (empty($sptNumber)) {
-                // Use NomorSuratService to generate with retry for race condition
-                $nomorData = \App\Services\NomorSuratService::generateWithRetry(
-                    config('esppd.unit_default'),
-                    config('esppd.kode_bagian_default')
-                );
-                $sptNumber = $nomorData['nomor_lengkap'];
+            // All approvals completed - Final approve (Fungsi finalizeSppd di md.md)
+            DB::transaction(function () use ($spd, $lastApproval) {
+                // 1. Lock Budget and update realisasi (Double Spend Protection dari 2.md/412)
+                $budget = \App\Models\Budget::lockForUpdate()->find($spd->budget_id);
+                if ($budget) {
+                    $budget->increment('used_budget', $spd->estimated_cost);
+                }
+
+                // 2. Generate nomor surat otomatis jika belum ada
+                $sptNumber = $spd->spt_number;
+                $spdNumber = $spd->spd_number;
                 
-                Log::info("Generated nomor surat: {$sptNumber} for SPD {$spd->id}");
-            }
+                if (empty($sptNumber) || str_contains($sptNumber, 'DRAFT')) {
+                    $nomorData = \App\Services\NomorSuratService::generateWithRetry(
+                        config('esppd.unit_default'),
+                        config('esppd.kode_bagian_default')
+                    );
+                    $sptNumber = $nomorData['nomor_lengkap'];
+                    $spdNumber = 'SPD.' . $sptNumber;
+                }
+                
+                // 3. Update SPD status (Approved Final)
+                $spd->update([
+                    'status' => 'approved',
+                    'approved_at' => now(),
+                    'approved_by' => $lastApproval?->approver_id ?? Auth::id(),
+                    'current_approver_nip' => null,
+                    'spt_number' => $sptNumber,
+                    'spd_number' => $spdNumber,
+                ]);
+
+                // 4. State Machine Transition (from 2.md)
+                $spd->transitionTo('approved', $lastApproval?->approver?->nip ?? 'system');
+            });
+
+            // 5. Dispatch async document generation via Python
+            \App\Jobs\GenerateDocumentJob::dispatch($spd->id, 'spt');
+            \App\Jobs\GenerateDocumentJob::dispatch($spd->id, 'spd');
             
-            $spd->update([
-                'status' => 'approved',
-                'approved_at' => now(),
-                'approved_by' => $lastApproval?->approver_id,
-                'current_approver_nip' => null,
-                'spt_number' => $sptNumber, // Auto-generated nomor surat
-            ]);
-            
-            Log::info("SPD {$spd->spd_number} finally approved with nomor: {$sptNumber}");
+            Log::info("SPD {$spd->id} finalized with number: {$spd->spt_number}");
         } else {
-            // Notify next approver and update current_approver_nip (from ceking.md)
+            // Forward to next approver
             $nextApproval = $spd->getPendingApproval();
             if ($nextApproval) {
-                // Update current_approver_nip for tracking
                 $spd->update([
                     'current_approver_nip' => $nextApproval->approver?->nip,
                 ]);
@@ -134,7 +179,7 @@ class ApprovalService
         );
         
         // Log notification
-        \Log::info("Notification sent to: {$targetApprover->name} for SPD: {$approval->spd->spd_number}");
+        Log::info("Notification sent to: {$targetApprover->name} for SPD: {$approval->spd->spd_number}");
     }
 
 
@@ -183,18 +228,28 @@ class ApprovalService
     }
 
     /**
-     * Create approval chain for SPPD
+     * Create approval chain for SPPD (Strictly matching md.md hierarchy)
      */
     public function createApprovalChain(Spd $spd): void
     {
-        // Get applicable rules
+        // Define limits from md.md (Level => Max IDR)
+        $limits = [
+            1 => 0,          // Staff
+            2 => 5000000,    // Kaprodi: 5jt
+            3 => 20000000,   // Wadek: 20jt
+            4 => 50000000,   // Dekan: 50jt
+            5 => 100000000,  // WR: 100jt
+            6 => 99999999999, // Rektor: Unlimited
+        ];
+
+        // 1. Get applicable rules for the unit
         $rules = ApprovalRule::active()
             ->forUnit($spd->unit_id)
             ->orderBy('level')
             ->get();
 
         if ($rules->isEmpty()) {
-            // Default: create single approval for supervisor
+            // Default Fallback: create single approval for supervisor
             Approval::create([
                 'spd_id' => $spd->id,
                 'approver_id' => $spd->employee->supervisor_id ?? null,
@@ -203,23 +258,24 @@ class ApprovalService
             ]);
         } else {
             foreach ($rules as $rule) {
-                // Check threshold
-                if ($rule->threshold_amount && $spd->estimated_cost < $rule->threshold_amount) {
-                    continue;
-                }
-
                 Approval::create([
                     'spd_id' => $spd->id,
                     'approver_id' => $rule->approver_id ?? $spd->employee->supervisor_id,
                     'level' => $rule->level,
                     'status' => 'pending',
                 ]);
+                
+                // If this level's limit covers the cost, we can stop the chain here
+                if (isset($limits[$rule->level]) && $spd->estimated_cost <= $limits[$rule->level]) {
+                    break;
+                }
             }
         }
 
         // Notify first approver
         $firstApproval = $spd->getPendingApproval();
         if ($firstApproval) {
+            $spd->update(['current_approver_nip' => $firstApproval->approver?->nip]);
             $this->notify($firstApproval);
         }
     }

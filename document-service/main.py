@@ -130,15 +130,14 @@ async def health_check():
     }
 
 
-@app.post("/generate-sppd", response_model=GenerateResponse)
-async def generate_sppd(data: SppdData):
-    """Generate SPPD document from template."""
+@app.post("/generate-sppd-pdf", response_model=GenerateResponse)
+async def generate_sppd_pdf(data: SppdData):
+    """Generate SPPD document and convert to PDF."""
     try:
-        logger.info(f"Generating SPPD for: {data.employee.nama}")
+        logger.info(f"Generating SPPD PDF for: {data.employee.nama}")
         
         generator = DocumentGenerator(TEMPLATES_DIR, GENERATED_DIR)
         
-        # Prepare context for template
         context = {
             "NOMOR_SPPD": data.nomor_sppd,
             "NAMA": data.employee.nama,
@@ -159,28 +158,26 @@ async def generate_sppd(data: SppdData):
             "TANGGAL_SPPD": data.tanggal_sppd,
         }
         
-        filename = generator.generate("template_sppd.docx", context, prefix="SPPD")
+        docx_filename = generator.generate("template_sppd.docx", context, prefix="SPPD")
+        pdf_path = generator.convert_to_pdf(GENERATED_DIR / docx_filename)
+        filename = pdf_path.name
         
         return GenerateResponse(
             success=True,
-            message="SPPD document generated successfully",
+            message="SPPD PDF generated successfully",
             filename=filename,
             download_url=f"/download/{filename}"
         )
-        
-    except FileNotFoundError as e:
-        logger.error(f"Template not found: {e}")
-        raise HTTPException(status_code=404, detail=f"Template not found: {e}")
     except Exception as e:
-        logger.error(f"Error generating SPPD: {e}")
+        logger.error(f"Error generating SPPD PDF: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/generate-surat-tugas", response_model=GenerateResponse)
-async def generate_surat_tugas(data: SuratTugasData):
-    """Generate Surat Tugas document from template."""
+@app.post("/generate-surat-tugas-pdf", response_model=GenerateResponse)
+async def generate_surat_tugas_pdf(data: SuratTugasData):
+    """Generate Surat Tugas document and convert to PDF."""
     try:
-        logger.info(f"Generating Surat Tugas for: {data.employee.nama}")
+        logger.info(f"Generating Surat Tugas PDF for: {data.employee.nama}")
         
         generator = DocumentGenerator(TEMPLATES_DIR, GENERATED_DIR)
         
@@ -202,28 +199,26 @@ async def generate_surat_tugas(data: SuratTugasData):
             "TANGGAL_SURAT": data.tanggal_surat,
         }
         
-        filename = generator.generate("template_surat_tugas.docx", context, prefix="ST")
+        docx_filename = generator.generate("template_surat_tugas.docx", context, prefix="ST")
+        pdf_path = generator.convert_to_pdf(GENERATED_DIR / docx_filename)
+        filename = pdf_path.name
         
         return GenerateResponse(
             success=True,
-            message="Surat Tugas document generated successfully",
+            message="Surat Tugas PDF generated successfully",
             filename=filename,
             download_url=f"/download/{filename}"
         )
-        
-    except FileNotFoundError as e:
-        logger.error(f"Template not found: {e}")
-        raise HTTPException(status_code=404, detail=f"Template not found: {e}")
     except Exception as e:
-        logger.error(f"Error generating Surat Tugas: {e}")
+        logger.error(f"Error generating Surat Tugas PDF: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/generate-laporan", response_model=GenerateResponse)
-async def generate_laporan(data: LaporanData):
-    """Generate Laporan Perjalanan document from template."""
+@app.post("/generate-laporan-pdf", response_model=GenerateResponse)
+async def generate_laporan_pdf(data: LaporanData):
+    """Generate Laporan document and convert to PDF."""
     try:
-        logger.info(f"Generating Laporan for: {data.employee.nama}")
+        logger.info(f"Generating Laporan PDF for: {data.employee.nama}")
         
         generator = DocumentGenerator(TEMPLATES_DIR, GENERATED_DIR)
         
@@ -245,20 +240,18 @@ async def generate_laporan(data: LaporanData):
             "TANGGAL_LAPORAN": data.tanggal_laporan,
         }
         
-        filename = generator.generate("template_laporan.docx", context, prefix="LAPORAN")
+        docx_filename = generator.generate("template_laporan.docx", context, prefix="LAPORAN")
+        pdf_path = generator.convert_to_pdf(GENERATED_DIR / docx_filename)
+        filename = pdf_path.name
         
         return GenerateResponse(
             success=True,
-            message="Laporan document generated successfully",
+            message="Laporan PDF generated successfully",
             filename=filename,
             download_url=f"/download/{filename}"
         )
-        
-    except FileNotFoundError as e:
-        logger.error(f"Template not found: {e}")
-        raise HTTPException(status_code=404, detail=f"Template not found: {e}")
     except Exception as e:
-        logger.error(f"Error generating Laporan: {e}")
+        logger.error(f"Error generating Laporan PDF: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

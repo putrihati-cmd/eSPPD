@@ -248,6 +248,9 @@ class SpdCreate extends Component
                 'employee_id' => $followerId
             ]);
         }
+
+        // Dispatch initial document generation for preview
+        \App\Jobs\GenerateDocumentJob::dispatch($spd->id, 'spt');
         
         session()->flash('message', 'SPD berhasil dibuat!');
 

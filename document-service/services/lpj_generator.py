@@ -208,12 +208,30 @@ d) Tanggal tiba di tempat kedudukan: {data.get('return_date', data.get('tanggal_
         Returns:
             Path to generated PDF
         """
+        import os
         docx_path = Path(docx_path)
         pdf_path = docx_path.with_suffix('.pdf')
         
+        # Common LibreOffice paths on Windows
+        soffice_paths = [
+            'soffice', # If in PATH
+            r'C:\Program Files\LibreOffice\program\soffice.exe',
+            r'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+            r'C:\laragon\bin\libreoffice\program\soffice.exe',
+        ]
+        
+        soffice_bin = None
+        for path in soffice_paths:
+            if path != 'soffice' and os.path.exists(path):
+                soffice_bin = path
+                break
+        
+        if not soffice_bin:
+            soffice_bin = 'soffice'
+
         try:
             subprocess.run([
-                'soffice',
+                soffice_bin,
                 '--headless',
                 '--convert-to', 'pdf',
                 '--outdir', str(docx_path.parent),
@@ -224,4 +242,4 @@ d) Tanggal tiba di tempat kedudukan: {data.get('return_date', data.get('tanggal_
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"PDF conversion failed: {e.stderr.decode()}")
         except FileNotFoundError:
-            raise RuntimeError("LibreOffice not found. Install for PDF conversion.")
+            raise RuntimeError("LibreOffice not found in common paths. Please install LibreOffice and add 'soffice' to PATH.")

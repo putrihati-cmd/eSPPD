@@ -3,19 +3,31 @@
 namespace App\Http\Controllers;
 
 use App\Models\TripReport;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PythonDocumentService;
 
 class TripReportPdfController extends Controller
 {
+    protected $pythonService;
+
+    public function __construct(PythonDocumentService $pythonService)
+    {
+        $this->pythonService = $pythonService;
+    }
+
     public function download(TripReport $report)
     {
         $report->load(['spd', 'employee.unit', 'activities', 'outputs']);
         
-        $pdf = Pdf::loadView('pdf.trip-report', [
-            'report' => $report,
-        ])->setPaper('a4', 'portrait');
+        $pdfContent = $this->pythonService->getTripReportPdf($report);
         
+        if (!$pdfContent) {
+            return back()->with('error', 'Gagal generate Laporan via Document Service.');
+        }
+
         $filename = "Laporan-" . str_replace(['/', '\\'], '-', $report->spd->spd_number) . ".pdf";
-        return $pdf->download($filename);
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
     }
 }
+

@@ -219,6 +219,7 @@ class DatabaseSeeder extends Seeder
                 'role_id' => $roleModel?->id,
                 'is_password_reset' => false,
             ]);
+        }
 
         // Create Budgets (MAK)
         $budgets = [

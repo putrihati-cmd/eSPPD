@@ -2,180 +2,159 @@
 
 namespace App\Services;
 
+use App\Models\Spd;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class PythonDocumentService
 {
     protected string $baseUrl;
-    protected int $timeout;
 
     public function __construct()
     {
-        $this->baseUrl = config('services.python_document.url', 'http://localhost:8001');
-        $this->timeout = config('services.python_document.timeout', 30);
+        $this->baseUrl = config('services.document.url', 'http://localhost:8001');
     }
 
     /**
-     * Check if Python service is available
+     * Fetch SPT PDF from Python Service
      */
-    public function isAvailable(): bool
+    public function getSptPdf(Spd $spd): ?string
     {
-        try {
-            $response = Http::timeout(5)->get("{$this->baseUrl}/health");
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::warning('Python document service not available: ' . $e->getMessage());
-            return false;
-        }
+        $data = [
+            'nomor_surat' => $spd->spt_number,
+            'employee' => [
+                'nama' => $spd->employee->name,
+                'nip' => $spd->employee->nip,
+                'jabatan' => $spd->employee->position ?? '',
+                'pangkat' => $spd->employee->rank ?? '',
+                'golongan' => $spd->employee->grade ?? '',
+                'unit_kerja' => $spd->unit->name ?? '',
+            ],
+            'perihal' => $spd->purpose,
+            'tujuan' => $spd->destination,
+            'tanggal_mulai' => $spd->departure_date->format('d F Y'),
+            'tanggal_selesai' => $spd->return_date->format('d F Y'),
+            'pejabat_penandatangan' => 'Dr. Rektor UIN', // Should be dynamic
+            'jabatan_penandatangan' => 'Rektor',
+            'nip_penandatangan' => '195301011988031006',
+            'tanggal_surat' => $spd->approved_at ? $spd->approved_at->format('d F Y') : now()->format('d F Y'),
+        ];
+
+        return $this->generateAndDownload('/generate-surat-tugas-pdf', $data);
     }
 
     /**
-     * Generate SPPD document
+     * Fetch SPD PDF from Python Service
      */
-    public function generateSPPD(array $data): ?string
+    public function getSpdPdf(Spd $spd): ?string
     {
-        return $this->generateDocument('/generate-sppd', $data, 'sppd');
-    }
-
-    /**
-     * Generate Surat Tugas document
-     */
-    public function generateSuratTugas(array $data): ?string
-    {
-        return $this->generateDocument('/generate-surat-tugas', $data, 'surat_tugas');
-    }
-
-    /**
-     * Generate Laporan document
-     */
-    public function generateLaporan(array $data): ?string
-    {
-        return $this->generateDocument('/generate-laporan', $data, 'laporan');
-    }
-
-    /**
-     * Internal method to generate document via Python service
-     */
-    protected function generateDocument(string $endpoint, array $data, string $type): ?string
-    {
-        try {
-            // Check service availability
-            if (!$this->isAvailable()) {
-                Log::warning("Python service unavailable, using fallback for {$type}");
-                return $this->fallbackGenerate($type, $data);
-            }
-
-            // Send request to Python service
-            $response = Http::timeout($this->timeout)
-                ->post("{$this->baseUrl}{$endpoint}", $data);
-
-            if (!$response->successful()) {
-                Log::error("Python service error: " . $response->body());
-                return $this->fallbackGenerate($type, $data);
-            }
-
-            $result = $response->json();
-
-            if (!$result['success']) {
-                Log::error("Document generation failed: " . ($result['message'] ?? 'Unknown error'));
-                return null;
-            }
-
-            // Download the generated file
-            $filename = $result['filename'];
-            $downloadUrl = "{$this->baseUrl}/download/{$filename}";
-
-            $fileResponse = Http::timeout($this->timeout)->get($downloadUrl);
-
-            if (!$fileResponse->successful()) {
-                Log::error("Failed to download generated document");
-                return null;
-            }
-
-            // Save to Laravel storage
-            $storagePath = "documents/{$type}/{$filename}";
-            Storage::put($storagePath, $fileResponse->body());
-
-            Log::info("Document generated successfully: {$storagePath}");
-
-            return $storagePath;
-
-        } catch (\Exception $e) {
-            Log::error("Error generating {$type} document: " . $e->getMessage());
-            return $this->fallbackGenerate($type, $data);
-        }
-    }
-
-    /**
-     * Fallback to PHPWord if Python service is unavailable
-     */
-    protected function fallbackGenerate(string $type, array $data): ?string
-    {
-        Log::info("Using PHPWord fallback for {$type}");
-
-        // This would call the existing PHPWord-based generation
-        // For now, return null to indicate fallback not implemented
-        // You can integrate with existing TripReportPdfController or similar
-
-        return null;
-    }
-
-    /**
-     * Format data for SPPD generation
-     */
-    public static function formatSppdData($spd): array
-    {
-        $employee = $spd->employee;
-
-        return [
+        $data = [
             'nomor_sppd' => $spd->spd_number,
             'employee' => [
-                'nama' => $employee->name ?? '',
-                'nip' => $employee->nip ?? '',
-                'jabatan' => $employee->position ?? '',
-                'pangkat' => $employee->rank ?? '',
-                'golongan' => $employee->grade ?? '',
-                'unit_kerja' => $employee->unit->name ?? '',
+                'nama' => $spd->employee->name,
+                'nip' => $spd->employee->nip,
+                'jabatan' => $spd->employee->position ?? '',
+                'pangkat' => $spd->employee->rank ?? '',
+                'golongan' => $spd->employee->grade ?? '',
+                'unit_kerja' => $spd->unit->name ?? '',
             ],
             'tujuan' => $spd->destination,
             'keperluan' => $spd->purpose,
-            'tanggal_berangkat' => $spd->departure_date?->format('d F Y'),
-            'tanggal_kembali' => $spd->return_date?->format('d F Y'),
-            'lama_perjalanan' => $spd->departure_date?->diffInDays($spd->return_date) + 1,
-            'sumber_dana' => $spd->budget?->name ?? '',
-            'pejabat_penandatangan' => config('esppd.signing_officer.name', ''),
-            'jabatan_penandatangan' => config('esppd.signing_officer.position', ''),
-            'nip_penandatangan' => config('esppd.signing_officer.nip', ''),
+            'tanggal_berangkat' => $spd->departure_date->format('d F Y'),
+            'tanggal_kembali' => $spd->return_date->format('d F Y'),
+            'lama_perjalanan' => $spd->duration,
+            'sumber_dana' => $spd->budget->name ?? '',
+            'pejabat_penandatangan' => 'Dr. Rektor UIN', // Should be dynamic
+            'jabatan_penandatangan' => 'Rektor',
+            'nip_penandatangan' => '195301011988031006',
         ];
+
+        return $this->generateAndDownload('/generate-sppd-pdf', $data);
     }
 
     /**
-     * Format data for Laporan generation
+     * Fetch Trip Report PDF from Python Service
      */
-    public static function formatLaporanData($tripReport): array
+    public function getTripReportPdf($report): ?string
     {
-        $spd = $tripReport->spd;
-        $employee = $spd->employee;
-
-        return [
-            'nomor_laporan' => '',
+        $data = [
+            'nomor_laporan' => $report->id,
             'employee' => [
-                'nama' => $employee->name ?? '',
-                'nip' => $employee->nip ?? '',
-                'jabatan' => $employee->position ?? '',
-                'pangkat' => $employee->rank ?? '',
-                'unit_kerja' => $employee->unit->name ?? '',
+                'nama' => $report->employee->name,
+                'nip' => $report->employee->nip,
+                'jabatan' => $report->employee->position ?? '',
+                'pangkat' => $report->employee->rank ?? '',
+                'unit_kerja' => $report->employee->unit->name ?? '',
+            ],
+            'nomor_sppd' => $report->spd->spd_number,
+            'tujuan' => $report->spd->destination,
+            'tanggal_berangkat' => $report->spd->departure_date->format('d F Y'),
+            'tanggal_kembali' => $report->spd->return_date->format('d F Y'),
+            'kegiatan' => $report->activities->pluck('description')->implode("\n"),
+            'hasil' => $report->outputs->pluck('description')->implode("\n"),
+            'kesimpulan' => $report->verification_notes ?? '',
+            'saran' => '',
+            'tanggal_laporan' => $report->submitted_at ? $report->submitted_at->format('d F Y') : now()->format('d F Y'),
+        ];
+
+        return $this->generateAndDownload('/generate-laporan-pdf', $data);
+    }
+
+    /**
+     * Fetch LPJ PDF (Formatted Table) from Python Service
+     */
+    public function getLpjPdf($report): ?string
+    {
+        $spd = $report->spd;
+        $data = [
+            'employee' => [
+                'nama' => $report->employee->name,
+                'nip' => $report->employee->nip,
+                'jabatan' => $report->employee->position ?? '',
+                'pangkat' => $report->employee->rank ?? '',
+                'golongan' => $report->employee->grade ?? '',
+                'unit_kerja' => $report->employee->unit->name ?? '',
             ],
             'nomor_sppd' => $spd->spd_number,
+            'nomor_surat_tugas' => $spd->spt_number,
             'tujuan' => $spd->destination,
-            'tanggal_berangkat' => $spd->departure_date?->format('d F Y'),
-            'tanggal_kembali' => $spd->return_date?->format('d F Y'),
-            'kegiatan' => $tripReport->activities ?? '',
-            'hasil' => $tripReport->outputs ?? '',
-            'kesimpulan' => '',
-            'saran' => '',
+            'keperluan' => $spd->purpose,
+            'tanggal_berangkat' => $spd->departure_date->format('d F Y'),
+            'tanggal_kembali' => $spd->return_date->format('d F Y'),
+            'lama_perjalanan' => $spd->duration,
+            'hari' => $spd->departure_date->isoFormat('dddd'),
+            'undangan' => $spd->invitation_number ?? '-',
+            'kegiatan' => $report->activities->pluck('description')->implode("\n"),
+            'outputs' => $report->outputs->pluck('description')->toArray(),
+            'tempat_lapor' => 'Purwokerto',
+            'tanggal_lapor' => $report->submitted_at ? $report->submitted_at->format('d F Y') : now()->format('d F Y'),
+            'atasan_nama' => $spd->approvedByEmployee->name ?? 'Dr. Rektor UIN',
+            'atasan_nip' => $spd->approvedByEmployee->nip ?? '195301011988031006',
         ];
+
+        return $this->generateAndDownload('/generate-lpj-pdf', $data);
+    }
+
+    protected function generateAndDownload(string $endpoint, array $data): ?string
+    {
+        try {
+            $response = Http::timeout(60)->post($this->baseUrl . $endpoint, $data);
+
+            if ($response->successful()) {
+                $downloadUrl = $response->json('download_url');
+                if ($downloadUrl) {
+                    $fileResponse = Http::timeout(60)->get($this->baseUrl . $downloadUrl);
+                    if ($fileResponse->successful()) {
+                        return $fileResponse->body();
+                    }
+                }
+            }
+            
+            Log::error("Python Document Service Error [{$endpoint}]: " . $response->body());
+        } catch (\Exception $e) {
+            Log::error("Python Document Service Exception: " . $e->getMessage());
+        }
+
+        return null;
     }
 }
