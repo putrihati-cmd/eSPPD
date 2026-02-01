@@ -69,7 +69,7 @@ new #[Layout('layouts.login')] class extends Component
 }
 ?>
 
-<div class="selection:bg-[#D4E157] selection:text-black font-sans min-h-screen relative overflow-hidden flex items-center justify-center p-6 bg-[#009ca6]">
+<div class="selection:bg-[#D4E157] selection:text-black font-sans min-h-screen relative overflow-hidden flex items-center justify-center bg-[#009ca6]">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -77,6 +77,7 @@ new #[Layout('layouts.login')] class extends Component
             font-family: 'Inter', sans-serif;
             margin: 0;
             background-color: #009ca6;
+            overflow-x: hidden;
         }
 
         .pattern-bg {
@@ -90,7 +91,7 @@ new #[Layout('layouts.login')] class extends Component
             z-index: 1;
         }
 
-        .main-container {
+        .main-content {
             position: relative;
             z-index: 10;
             width: 100%;
@@ -98,324 +99,314 @@ new #[Layout('layouts.login')] class extends Component
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 2rem;
+            padding: 0 4rem;
+            box-sizing: border-box;
         }
 
-        /* Hero Text Styles */
-        .hero-section {
+        /* Hero styles */
+        .hero-left {
             flex: 1;
             color: white;
-            padding-right: 4rem;
+            padding-right: 2rem;
+            animation: fadeIn 0.8s ease-out;
         }
 
-        .badge-saizu {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 20px;
+        .badge-pill {
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #d4e157;
+            padding: 6px 16px;
             border-radius: 999px;
             font-size: 11px;
             font-weight: 700;
-            color: #d4e157;
-            margin-bottom: 2rem;
+            display: inline-block;
+            margin-bottom: 24px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        .hero-title {
+        .hero-h1 {
             font-size: 64px;
             font-weight: 800;
             line-height: 1.1;
-            margin-bottom: 1.5rem;
+            margin: 0 0 20px 0;
         }
 
-        .hero-title .highlight {
+        .hero-h1 span.lime {
             color: #d4e157;
             display: block;
         }
 
-        .hero-desc {
+        .hero-p {
             font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
             line-height: 1.6;
-            color: rgba(255, 255, 255, 0.82);
-            margin-bottom: 3rem;
-            max-width: 520px;
+            max-width: 500px;
+            margin-bottom: 32px;
         }
 
-        .hero-actions {
+        .hero-btns {
             display: flex;
-            gap: 1.25rem;
-            margin-bottom: 5rem;
+            gap: 16px;
+            margin-bottom: 60px;
         }
 
-        .btn-lime {
-            background-color: #d4e157;
+        .hero-btns .btn-primary {
+            background: #d4e157;
             color: #1a202c;
-            padding: 12px 28px;
-            border-radius: 8px;
             font-weight: 700;
             font-size: 14px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
-            text-decoration: none;
         }
 
-        .btn-outline {
-            background-color: transparent;
+        .hero-btns .btn-outline {
+            border: 2px solid rgba(255, 255, 255, 0.5);
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            padding: 12px 28px;
-            border-radius: 8px;
             font-weight: 700;
             font-size: 14px;
-            transition: all 0.2s;
+            padding: 10px 24px;
+            border-radius: 8px;
             text-decoration: none;
+            transition: all 0.2s;
         }
 
-        .stats-grid {
+        .stats-wrap {
             display: flex;
-            gap: 5rem;
+            gap: 60px;
         }
 
-        .stat-item h3 {
-            font-size: 44px;
+        .stat-box .num {
+            font-size: 48px;
             font-weight: 800;
             color: #d4e157;
-            margin-bottom: 0px;
+            line-height: 1;
         }
 
-        .stat-item p {
+        .stat-box .label {
             font-size: 12px;
             font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(255, 255, 255, 1);
-            margin-top: 4px;
         }
 
-        /* Login Card Styles */
-        .login-card-wrapper {
-            flex: 0 0 440px;
+        /* Card styles */
+        .card-right {
+            flex: 0 0 450px;
+            animation: fadeIn 0.8s ease-out 0.2s backwards;
         }
 
         .login-card {
             background: #f1f5f9;
             border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 48px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-card .logo {
+            display: block;
+            margin: 0 auto 24px;
+            height: 72px;
+        }
+
+        .login-card .title {
             text-align: center;
-        }
-
-        .logo-img {
-            height: 70px;
-            margin-bottom: 24px;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        }
-
-        .card-title {
             font-size: 24px;
             font-weight: 800;
             color: #1e293b;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
 
-        .card-subtitle {
+        .login-card .subtitle {
+            text-align: center;
             font-size: 14px;
-            color: #475569;
+            color: #64748b;
             margin-bottom: 32px;
         }
 
-        .form-group {
-            text-align: left;
+        .auth-form .group {
             margin-bottom: 20px;
         }
 
-        .form-label {
+        .auth-form .label {
             display: block;
             font-size: 13px;
             font-weight: 700;
-            color: #1e293b;
+            color: #334155;
             margin-bottom: 8px;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
-        .form-input {
+        .auth-form .input {
             width: 100%;
+            padding: 12px 16px;
             background: white;
             border: 1.5px solid #e2e8f0;
             border-radius: 10px;
-            padding: 12px 16px;
             font-size: 14px;
             font-weight: 500;
             color: #1e293b;
-            transition: all 0.2s;
             box-sizing: border-box;
+            transition: all 0.2s;
         }
 
-        .form-input:focus {
+        .auth-form .input:focus {
             outline: none;
             border-color: #009ca6;
-            box-shadow: 0 0 0 4px rgba(0, 156, 166, 0.08);
+            box-shadow: 0 0 0 3px rgba(0, 156, 166, 0.1);
         }
 
-        .form-footer-links {
+        .auth-form .footer-row {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            align-items: center;
+            margin-bottom: 28px;
         }
 
-        .remember-me {
+        .auth-form .remember {
             display: flex;
             align-items: center;
             gap: 8px;
             font-size: 13px;
             font-weight: 600;
             color: #64748b;
-            cursor: pointer;
         }
 
-        .forgot-link {
+        .auth-form .forgot {
             font-size: 13px;
             font-weight: 700;
-            color: #009ca6;
+            color: #009ca4;
             text-decoration: none;
         }
 
-        .btn-submit {
+        .auth-form .submit-btn {
             width: 100%;
-            background-color: #009ca6;
+            background: #009ca4;
             color: white;
+            font-weight: 800;
+            font-size: 15px;
+            padding: 14px;
             border: none;
             border-radius: 10px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 800;
             cursor: pointer;
             transition: all 0.2s;
             margin-bottom: 24px;
         }
 
-        .btn-submit:hover {
-            background-color: #00838c;
+        .auth-form .submit-btn:hover {
+            background: #008a91;
             transform: translateY(-1px);
         }
 
-        .footer-cta {
+        .auth-form .reg-text {
+            text-align: center;
             font-size: 14px;
-            color: #64748b;
             font-weight: 600;
+            color: #64748b;
         }
 
-        .footer-cta a {
-            color: #009ca6;
+        .auth-form .reg-text a {
+            color: #009ca4;
             font-weight: 800;
             text-decoration: none;
         }
 
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 1024px) {
-            .main-container {
-                flex-direction: column;
-                text-align: center;
-                padding-top: 2rem;
-            }
-            .hero-section {
-                padding-right: 0;
-                margin-bottom: 3rem;
-            }
-            .hero-desc {
-                margin-left: auto;
-                margin-right: auto;
-            }
-            .hero-actions {
-                justify-content: center;
-            }
-            .stats-grid {
-                justify-content: center;
-                gap: 2rem;
-            }
+            .main-content { flex-direction: column; padding: 4rem 2rem; text-align: center; }
+            .hero-left { padding-right: 0; margin-bottom: 3rem; }
+            .hero-p { margin: 0 auto 32px; }
+            .hero-btns { justify-content: center; }
+            .stats-wrap { justify-content: center; gap: 40px; }
         }
     </style>
 
     <div class="pattern-bg"></div>
 
-    <div class="main-container">
+    <div class="main-content">
         <!-- Hero Section -->
-        <div class="hero-section">
-            <div class="badge-saizu">UIN SAIZU Purwokerto</div>
-            <h1 class="hero-title">
+        <div class="hero-left">
+            <div class="badge-pill">UIN SAIZU Purwokerto</div>
+            <h1 class="hero-h1">
                 Sistem Informasi
-                <span class="highlight">Perjalanan Dinas</span>
+                <span class="lime">Perjalanan Dinas</span>
             </h1>
-            <p class="hero-desc">
+            <p class="hero-p">
                 Efisiensi Pengajuan dan Pelaporan Perjalanan Dinas UIN Saizu Purwokerto dengan sistem digital yang modern dan terintegrasi.
             </p>
 
-            <div class="hero-actions">
-                <a href="#" class="btn-lime">
+            <div class="hero-btns">
+                <a href="#" class="btn-primary">
                     Pelajari Lebih Lanjut
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </a>
                 <a href="#" class="btn-outline">Panduan Pengguna</a>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <h3>500+</h3>
-                    <p>Perjalanan Dinas</p>
+            <div class="stats-wrap">
+                <div class="stat-box">
+                    <div class="num">500+</div>
+                    <div class="label">Perjalanan Dinas</div>
                 </div>
-                <div class="stat-item">
-                    <h3>50+</h3>
-                    <p>Dosen & Staff</p>
+                <div class="stat-box">
+                    <div class="num">50+</div>
+                    <div class="label">Dosen & Staff</div>
                 </div>
-                <div class="stat-item">
-                    <h3>99%</h3>
-                    <p>Kepuasan</p>
+                <div class="stat-box">
+                    <div class="num">99%</div>
+                    <div class="label">Kepuasan</div>
                 </div>
             </div>
         </div>
 
-        <!-- Login Section -->
-        <div class="login-card-wrapper">
+        <!-- Login Card -->
+        <div class="card-right">
             <div class="login-card">
-                <img src="{{ asset('images/logo.png') }}" alt="Logo UIN SAIZU" class="logo-img">
-                <h2 class="card-title">Login e-SPPD</h2>
-                <p class="card-subtitle">Masuk ke sistem perjalanan dinas</p>
+                <img src="{{ asset('images/logo.png') }}" alt="Logo" class="logo">
+                <h2 class="title">Login e-SPPD</h2>
+                <p class="subtitle">Masuk ke sistem perjalanan dinas</p>
 
                 @if (session('error'))
-                    <div style="background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 700;">
+                    <div style="background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 8px; margin-bottom: 24px; font-size: 13px; font-weight: 700; text-align: center;">
                         {{ session('error') }}
                     </div>
                 @endif
 
-                <form wire:submit="login">
-                    <div class="form-group">
-                        <label class="form-label">Username / NIP</label>
-                        <input wire:model="nip" type="text" placeholder="Masukkan username atau NIP" class="form-input" required>
+                <form wire:submit="login" class="auth-form">
+                    <div class="group">
+                        <label class="label">Username / NIP</label>
+                        <input wire:model="nip" type="text" placeholder="Masukkan username atau NIP" class="input" required>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input wire:model="password" type="password" placeholder="Masukkan password" class="form-input" required>
+                    <div class="group" style="margin-bottom: 24px;">
+                        <label class="label">Password</label>
+                        <input wire:model="password" type="password" placeholder="Masukkan password" class="input" required>
                     </div>
 
-                    <div class="form-footer-links">
-                        <label class="remember-me">
-                            <input type="checkbox" wire:model="remember" style="margin: 0; width: 16px; height: 16px;">
+                    <div class="footer-row">
+                        <label class="remember">
+                            <input type="checkbox" wire:model="remember" style="width: 16px; height: 16px;">
                             Ingat saya
                         </label>
-                        <a href="#" class="forgot-link">Lupa password?</a>
+                        <a href="#" class="forgot">Lupa password?</a>
                     </div>
 
-                    <button type="submit" class="btn-submit" wire:loading.attr="disabled">
+                    <button type="submit" class="submit-btn" wire:loading.attr="disabled">
                         <span wire:loading.remove>Masuk</span>
                         <span wire:loading>Memproses...</span>
                     </button>
-                    
-                    <div class="footer-cta">
+
+                    <div class="reg-text">
                         Belum punya akun? <a href="#">Hubungi Admin</a>
                     </div>
                 </form>
