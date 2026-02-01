@@ -11,7 +11,8 @@
     </style>
     @livewireStyles
 </head>
-<body class="flex items-center justify-center min-h-screen bg-brand-teal">
+<body class="flex items-center justify-center min-h-screen">
+    {{ $slot ?? '' }}
     @yield('content')
     @livewireScripts
 </body>

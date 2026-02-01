@@ -112,7 +112,7 @@ Route::middleware(['auth'])->prefix('settings')->name('settings.')->group(functi
 // ============================================
 use App\Http\Controllers\ImportController;
 
-Route::middleware(['auth', 'role:admin'])->prefix('import')->name('import.')->group(function () {
+Route::middleware(['auth', 'approval-level:6'])->prefix('import')->name('import.')->group(function () {
     Route::get('/employees', [ImportController::class, 'showForm'])->name('form');
     Route::post('/employees', [ImportController::class, 'import'])->name('employees');
     Route::get('/template', [ImportController::class, 'template'])->name('template');
@@ -123,7 +123,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('import')->name('import.')->gr
 // ============================================
 use App\Http\Controllers\SmartImportController;
 
-Route::middleware(['auth', 'role:admin'])->prefix('smart-import')->name('smart-import.')->group(function () {
+Route::middleware(['auth', 'approval-level:6'])->prefix('smart-import')->name('smart-import.')->group(function () {
     Route::get('/', [SmartImportController::class, 'index'])->name('index');
     Route::post('/upload', [SmartImportController::class, 'upload'])->name('upload');
     Route::post('/mapping', [SmartImportController::class, 'updateMapping'])->name('mapping');
