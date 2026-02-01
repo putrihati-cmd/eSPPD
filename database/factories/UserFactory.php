@@ -29,7 +29,32 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'is_password_reset' => true,
         ];
+    }
+
+    public function withEmployee(): static
+    {
+        return $this->afterCreating(function ($user) {
+            $organization = \App\Models\Organization::factory()->create();
+            $unit = \App\Models\Unit::factory()->create([
+                'organization_id' => $organization->id,
+            ]);
+            $user->employee()->create([
+                'organization_id' => $organization->id,
+                'unit_id' => $unit->id,
+                'nip' => sprintf('%018d', random_int(100000000000000000, 999999999999999999)),
+                'name' => $user->name,
+                'email' => $user->email,
+                'user_id' => $user->id,
+                'position' => 'Staff',
+                'rank' => 'IV/a',
+                'grade' => 'Pembina',
+                'employment_status' => 'PNS',
+                'approval_level' => 1,
+                'is_active' => true,
+            ]);
+        });
     }
 
     /**
@@ -37,7 +62,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
         ]);
     }

@@ -23,7 +23,7 @@ class EmployeeFactory extends Factory
             'organization_id' => Organization::factory(),
             'unit_id' => Unit::factory(),
             'user_id' => User::factory(),
-            'nip' => $this->faker->unique()->numerify('##########'),
+            'nip' => sprintf('%018d', random_int(100000000000000000, 999999999999999999)),
             'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
             'phone' => $this->faker->phoneNumber(),
@@ -31,6 +31,7 @@ class EmployeeFactory extends Factory
             'rank' => 'IV/a',
             'grade' => 'Pembina',
             'employment_status' => 'PNS',
+            'approval_level' => 1,
             'is_active' => true,
         ];
     }

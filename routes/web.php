@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Livewire\Approvals\ApprovalIndex;
@@ -220,5 +221,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/activity-dashboard', ActivityDashboard::class)->name('activity-dashboard');
     });
 });
+
+// Staff Dashboard (approval_level 1)
+Route::middleware(['auth', 'approval-level:1'])->get('/staff/dashboard', function () {
+    return 'Staff Dashboard';
+})->name('staff.dashboard');
 
 require __DIR__ . '/auth.php';

@@ -22,28 +22,30 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withEmployee()->create();
+        $nip = $user->employee->nip;
 
-        $component = Volt::test('pages.auth.login')
-            ->set('form.email', $user->email)
-            ->set('form.password', 'password');
+        $component = \Livewire\Livewire::test(\App\Livewire\Pages\Auth\Login::class)
+            ->set('nip', $nip)
+            ->set('password', 'password');
 
         $component->call('login');
 
         $component
             ->assertHasNoErrors()
-            ->assertRedirect(route('dashboard', absolute: false));
+            ->assertRedirect(route('staff.dashboard', absolute: false));
 
         $this->assertAuthenticated();
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withEmployee()->create();
+        $nip = $user->employee->nip;
 
-        $component = Volt::test('pages.auth.login')
-            ->set('form.email', $user->email)
-            ->set('form.password', 'wrong-password');
+        $component = \Livewire\Livewire::test(\App\Livewire\Pages\Auth\Login::class)
+            ->set('nip', $nip)
+            ->set('password', 'wrong-password');
 
         $component->call('login');
 
@@ -56,7 +58,7 @@ class AuthenticationTest extends TestCase
 
     public function test_navigation_menu_can_be_rendered(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withEmployee()->create();
 
         $this->actingAs($user);
 
@@ -69,7 +71,7 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withEmployee()->create();
 
         $this->actingAs($user);
 

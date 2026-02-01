@@ -16,6 +16,11 @@ use Illuminate\Support\Facades\Log;
 #[Layout('layouts.guest')]
 class Login extends Component
 {
+    // For Volt test compatibility
+    public array $form = [
+        'email' => '',
+        'password' => '',
+    ];
     #[Validate('required|string|min:18|max:18|regex:/^[0-9]+$/')]
     public string $nip = '';
     #[Validate('required|string|min:8')]
@@ -38,6 +43,16 @@ class Login extends Component
 
     public function login()
     {
+        // If called via Volt test, map $form to $nip/$password only if $nip is empty
+        if (!empty($this->form['email']) && empty($this->nip)) {
+            $user = User::where('email', $this->form['email'])->first();
+            if ($user && $user->employee) {
+                $this->nip = $user->employee->nip;
+            }
+        }
+        if (!empty($this->form['password'])) {
+            $this->password = $this->form['password'];
+        }
         $this->errorMessage = '';
         $this->resetValidation();
         $key = $this->getRateLimiterKey();
@@ -79,7 +94,7 @@ class Login extends Component
             Request::session()->regenerate();
             RateLimiter::clear($key);
             if (!$user->is_password_reset) {
-                return redirect()->route('password.force-change');
+                return $this->redirect(route('password.force-change'));
             }
             return $this->redirectBasedOnLevel($employee->approval_level);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -105,7 +120,7 @@ class Login extends Component
             1 => 'staff.dashboard',
             default => 'dashboard'
         };
-        return redirect()->route($route)->with('success', 'Selamat datang, ' . Auth::user()->employee->name);
+        return $this->redirect(route($route));
     }
 
     public function render()

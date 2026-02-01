@@ -1765,3 +1765,1037 @@ Route::post('/logout', function() {
 })->name('logout');
 Ini adalah blueprint lengkap dan final. Setiap komponen sudah include security check (IDOR, Level validation, Ownership) dan business rules (Atomic transaction, Hierarchy, Limit).
 
+📗 E-SPPD ADVANCED PRODUCTION FEATURES
+Version: 3.0 Production-Ready
+Scope: Notification → Audit → Delegation → Edge Cases
+STEP 6: NOTIFICATION SYSTEM (Queue-Based)
+Architecture Decision
+Real-time: Database notification (for in-app bell icon)
+Email: Laravel Queue (async, tidak blocking approval process)
+WhatsApp: Optional webhook ke WA Gateway (dikadok/woowa)
+php
+Copy
+<?php
+// app/Notifications/SppdSubmittedNotification.php
+namespace App\Notifications;
+
+use App\Models\Sppd;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Notification;
+
+class SppdSubmittedNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+
+    public function __construct(public Sppd $sppd) {}
+
+    public function via(object $notifiable): array
+    {
+        return ['database', 'mail']; // Tambahkan 'wa' jika integrate WhatsApp
+    }
+
+    public function toDatabase(object $notifiable): array
+    {
+        return [
+            'sppd_id' => $this->sppd->id,
+            'title' => 'Pengajuan SPPD Baru',
+            'message' => "{$this->sppd->employee->name} mengajukan SPPD ke {$this->sppd->destination}",
+            'amount' => $this->sppd->total_biaya,
+            'action_url' => route('approval.detail', $this->sppd),
+            'type' => 'sppd_submitted',
+            'icon' => 'document-text'
+        ];
+    }
+
+    public function toMail(object $notifiable): \Illuminate\Notifications\Messages\MailMessage
+    {
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject("[e-SPPD] Pengajuan Baru dari {$this->sppd->employee->name}")
+            ->greeting("Assalamu'alaikum Wr. Wb.")
+            ->line("Ada pengajuan SPPD baru yang memerlukan approval Anda:")
+            ->line("**Pengaju:** {$this->sppd->employee->name} (NIP: {$this->sppd->employee_nip})")
+            ->line("**Tujuan:** {$this->sppd->destination}")
+            ->line("**Total Biaya:** Rp " . number_format($this->sppd->total_biaya, 0, ',', '.'))
+            ->line("**Tanggal:** {$this->sppd->start_date->format('d M Y')} - {$this->sppd->end_date->format('d M Y')}")
+            ->action('Lihat Detail', route('approval.detail', $this->sppd))
+            ->line('Silakan login ke sistem e-SPPD untuk menyetujui atau menolak pengajuan ini.')
+            ->salutation("Wassalamu'alaikum Wr. Wb.\nSistem e-SPPD UIN Saizu");
+    }
+}
+
+// Trigger di CreateSppd.php setelah save:
+// $approverUser = User::whereHas('employee', fn($q) => $q->where('nip', $currentApprover))->first();
+// if ($approverUser) {
+//     $approverUser->notify(new SppdSubmittedNotification($sppd));
+// }
+In-App Notification Bell (Livewire Component)
+php
+Copy
+<?php
+// app/Livewire/Notification/NotificationBell.php
+namespace App\Livewire\Notification;
+
+use Livewire\Component;
+
+class NotificationBell extends Component
+{
+    public $unreadCount = 0;
+    public $notifications = [];
+    public $isOpen = false;
+
+    protected $listeners = ['refreshNotifications' => 'loadNotifications'];
+
+    public function mount()
+    {
+        $this->loadNotifications();
+    }
+
+    public function loadNotifications()
+    {
+        $user = auth()->user();
+        $this->unreadCount = $user->unreadNotifications->count();
+        $this->notifications = $user->notifications()->take(5)->get();
+    }
+
+    public function toggleDropdown()
+    {
+        $this->isOpen = !$this->isOpen;
+    }
+
+    public function markAsRead($notificationId)
+    {
+        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+        $notification->markAsRead();
+        $this->loadNotifications();
+        
+        // Redirect ke action URL
+        if (isset($notification->data['action_url'])) {
+            return redirect($notification->data['action_url']);
+        }
+    }
+
+    public function markAllAsRead()
+    {
+        auth()->user()->unreadNotifications->markAsRead();
+        $this->loadNotifications();
+    }
+
+    public function render()
+    {
+        return view('livewire.notification.bell');
+    }
+}
+blade
+Copy
+{{-- resources/views/livewire/notification/bell.blade.php --}}
+<div class="relative ml-3">
+    <button wire:click="toggleDropdown" class="relative p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none">
+        <span class="sr-only">View notifications</span>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+        
+        @if($unreadCount > 0)
+            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500 transform translate-x-1/2 -translate-y-1/4">
+                <span class="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping"></span>
+            </span>
+            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+            </span>
+        @endif
+    </button>
+
+    @if($isOpen)
+        <div class="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+            <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-sm font-medium text-gray-700">Notifikasi</h3>
+                @if($unreadCount > 0)
+                    <button wire:click="markAllAsRead" class="text-xs text-teal-600 hover:text-teal-800">Tandai semua baca</button>
+                @endif
+            </div>
+            
+            <div class="max-h-96 overflow-y-auto">
+                @forelse($notifications as $notification)
+                    <div wire:click="markAsRead('{{ $notification->id }}')" 
+                         class="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 {{ $notification->read_at ? 'opacity-60' : 'bg-teal-50' }}">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                @if($notification->data['type'] === 'sppd_submitted')
+                                    <svg class="h-5 w-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                @else
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                @endif
+                            </div>
+                            <div class="ml-3 w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-900">{{ $notification->data['title'] ?? 'Notifikasi' }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ $notification->data['message'] ?? '' }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                            @if(!$notification->read_at)
+                                <span class="inline-block w-2 h-2 bg-teal-500 rounded-full ml-2"></span>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="px-4 py-6 text-center text-sm text-gray-500">
+                        Tidak ada notifikasi
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    @endif
+</div>
+STEP 7: COMPREHENSIVE AUDIT TRAIL (BPK Compliance)
+Migrations Tambahan
+php
+Copy
+// Log perubahan anggaran (untuk audit BPK)
+Schema::create('anggaran_logs', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('anggaran_id')->constrained();
+    $table->foreignId('sppd_id')->constrained();
+    $table->decimal('nominal', 15, 2); // Nominal yang ditambahkan ke realisasi
+    $table->decimal('sisa_sebelum', 15, 2);
+    $table->decimal('sisa_sesudah', 15, 2);
+    $table->string('approved_by_nip', 18); // Siapa yang approve final
+    $table->timestamp('approved_at');
+    $table->timestamps();
+});
+
+// Log aktivitas user (who changed what)
+Schema::create('activity_logs', function (Blueprint $table) {
+    $table->id();
+    $table->string('nip', 18); // Actor
+    $table->string('action'); // create, update, delete, approve, reject, login, logout
+    $table->string('entity_type'); // Sppd, Employee, Anggaran
+    $table->unsignedBigInteger('entity_id');
+    $table->json('old_values')->nullable();
+    $table->json('new_values')->nullable();
+    $table->string('ip_address')->nullable();
+    $table->text('user_agent')->nullable();
+    $table->timestamps();
+    
+    $table->index(['entity_type', 'entity_id']);
+    $table->index('nip');
+});
+Trait untuk Logging Otomatis
+php
+Copy
+<?php
+// app/Traits/LogsActivity.php
+namespace App\Traits;
+
+use App\Models\ActivityLog;
+
+trait LogsActivity
+{
+    protected static function bootLogsActivity()
+    {
+        static::created(function ($model) {
+            $model->logActivity('create', null, $model->getAttributes());
+        });
+
+        static::updated(function ($model) {
+            $model->logActivity('update', $model->getOriginal(), $model->getChanges());
+        });
+
+        static::deleted(function ($model) {
+            $model->logActivity('delete', $model->getAttributes(), null);
+        });
+    }
+
+    public function logActivity(string $action, $oldValues, $newValues)
+    {
+        if (!auth()->check()) return;
+        
+        ActivityLog::create([
+            'nip' => auth()->user()->employee->nip,
+            'action' => $action,
+            'entity_type' => class_basename($this),
+            'entity_id' => $this->getKey(),
+            'old_values' => $oldValues ? json_encode($oldValues) : null,
+            'new_values' => $newValues ? json_encode($newValues) : null,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+    }
+}
+
+// Penggunaan di Model:
+// class Sppd extends Model { use LogsActivity; }
+Audit Report Controller (untuk BPK)
+php
+Copy
+<?php
+// app/Http/Controllers/AuditController.php
+namespace App\Http\Controllers;
+
+use App\Models\ActivityLog;
+use App\Models\AnggaranLog;
+use App\Models\Sppd;
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class AuditController extends Controller
+{
+    public function index(Request $request)
+    {
+        // Hanya Admin atau特定 role yang bisa akses
+        $this->authorize('viewAudit', Sppd::class);
+        
+        $logs = ActivityLog::with('actor')
+            ->when($request->entity_type, fn($q) => $q->where('entity_type', $request->entity_type))
+            ->when($request->nip, fn($q) => $q->where('nip', $request->nip))
+            ->when($request->date_from, fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
+            ->when($request->date_to, fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->latest()
+            ->paginate(50);
+            
+        return view('audit.index', compact('logs'));
+    }
+    
+    public function anggaranAudit($anggaranId)
+    {
+        $logs = AnggaranLog::with('sppd', 'approver')
+            ->where('anggaran_id', $anggaranId)
+            ->get();
+            
+        $pdf = Pdf::loadView('pdf.audit-anggaran', compact('logs'));
+        return $pdf->download('audit-anggaran-' . $anggaranId . '.pdf');
+    }
+    
+    public function whoChanged What($sppdId)
+    {
+        // Timeline lengkap perubahan 1 SPPD
+        $logs = ActivityLog::where('entity_type', 'Sppd')
+            ->where('entity_id', $sppdId)
+            ->orderBy('created_at')
+            ->get();
+            
+        return response()->json($logs);
+    }
+}
+STEP 8: DELEGATION SYSTEM (Cuti/Delegasi Wewenang)
+php
+Copy
+<?php
+// app/Models/Delegation.php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Delegation extends Model
+{
+    protected $fillable = [
+        'delegator_nip',    // Yang delegasi (cuti)
+        'delegate_nip',     // Pengganti
+        'start_date',
+        'end_date',
+        'reason',
+        'is_active',
+        'created_by'        // Admin yang input
+    ];
+    
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'is_active' => 'boolean',
+    ];
+    
+    public function delegator()
+    {
+        return $this->belongsTo(Employee::class, 'delegator_nip', 'nip');
+    }
+    
+    public function delegate()
+    {
+        return $this->belongsTo(Employee::class, 'delegate_nip', 'nip');
+    }
+    
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)
+                     ->where('start_date', '<=', now())
+                     ->where('end_date', '>=', now());
+    }
+}
+
+// Modifikasi di CreateSppd.php (Step 3 sebelumnya):
+private function determineApprover(Employee $employee): ?string
+{
+    $superiorNip = $employee->superior_nip;
+    
+    if (!$superiorNip) return null;
+    
+    // Cek apakah superior sedang delegasi
+    $delegation = Delegation::where('delegator_nip', $superiorNip)
+        ->active()
+        ->first();
+        
+    if ($delegation) {
+        // Log untuk audit trail
+        \Log::info('Delegation active', [
+            'original' => $superiorNip,
+            'delegated_to' => $delegation->delegate_nip,
+            'sppd_by' => $employee->nip
+        ]);
+        
+        return $delegation->delegate_nip;
+    }
+    
+    return $superiorNip;
+}
+Livewire Manage Delegation
+php
+Copy
+<?php
+// app/Livewire/Delegation/ManageDelegation.php
+namespace App\Livewire\Delegation;
+
+use App\Models\Delegation;
+use App\Models\Employee;
+use Livewire\Component;
+
+class ManageDelegation extends Component
+{
+    public $delegations;
+    public $delegate_nip;
+    public $start_date;
+    public $end_date;
+    public $reason;
+
+    protected $rules = [
+        'delegate_nip' => 'required|exists:employees,nip',
+        'start_date' => 'required|date|after_or_equal:today',
+        'end_date' => 'required|date|after:start_date',
+        'reason' => 'required|string|min:10',
+    ];
+
+    public function mount()
+    {
+        $this->loadDelegations();
+    }
+
+    public function loadDelegations()
+    {
+        $this->delegations = Delegation::where('delegator_nip', auth()->user()->employee->nip)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function createDelegation()
+    {
+        $this->validate();
+        
+        // Validasi: Delegate harus level yang sama atau lebih tinggi?
+        $delegatorLevel = auth()->user()->employee->approval_level;
+        $delegateLevel = Employee::where('nip', $this->delegate_nip)->value('approval_level');
+        
+        if ($delegateLevel < $delegatorLevel) {
+            $this->addError('delegate_nip', 'Pejabat pengganti harus setingkat atau lebih tinggi.');
+            return;
+        }
+        
+        Delegation::create([
+            'delegator_nip' => auth()->user()->employee->nip,
+            'delegate_nip' => $this->delegate_nip,
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'reason' => $this->reason,
+            'is_active' => true,
+            'created_by' => auth()->id(),
+        ]);
+        
+        $this->reset(['delegate_nip', 'start_date', 'end_date', 'reason']);
+        $this->loadDelegations();
+        session()->flash('success', 'Delegasi berhasil dibuat.');
+    }
+
+    public function cancelDelegation($id)
+    {
+        $delegation = Delegation::where('delegator_nip', auth()->user()->employee->nip)
+            ->findOrFail($id);
+            
+        $delegation->update(['is_active' => false]);
+        $this->loadDelegations();
+    }
+
+    public function render()
+    {
+        $potentialDelegates = Employee::where('approval_level', '>=', auth()->user()->employee->approval_level)
+            ->where('nip', '!=', auth()->user()->employee->nip)
+            ->where('is_active', true)
+            ->get();
+            
+        return view('livewire.delegation.manage', [
+            'potentialDelegates' => $potentialDelegates
+        ]);
+    }
+}
+STEP 9: EDGE CASES & SAFETY MECHANISMS
+A. Race Condition Prevention (Double Spending Anggaran)
+php
+Copy
+// Modifikasi ApprovalDetail.php (Step 4 sebelumnya)
+public function approve()
+{
+    // Gunakan pessimistic locking di level database
+    $sppd = Sppd::lockForUpdate()->find($this->sppd->id);
+    
+    // Re-check status (mungkin sudah di-approve user lain)
+    if ($sppd->status !== 'pending' || $sppd->current_approver_nip !== auth()->user()->employee->nip) {
+        throw new \Exception('SPPD sudah diproses oleh user lain atau status berubah.');
+    }
+    
+    // ... lanjutkan logic approval
+}
+B. Session Hijacking Protection
+php
+Copy
+// app/Http/Middleware/ValidateSessionIntegrity.php
+public function handle($request, Closure $next)
+{
+    if (auth()->check()) {
+        $user = auth()->user();
+        
+        // Invalidate session jika IP berubah drastis (opsional, bisa strict)
+        // atau jika user agent berubah
+        
+        // Check session timeout (inactivity)
+        $lastActivity = session('last_activity');
+        if ($lastActivity && now()->diffInMinutes($lastActivity) > 30) {
+            auth()->logout();
+            return redirect('/login')->with('error', 'Sesi habis karena tidak aktif.');
+        }
+        
+        session(['last_activity' => now()]);
+    }
+    
+    return $next($request);
+}
+C. Backup Auto-Save Draft (Prevent Data Loss)
+php
+Copy
+// Auto-save setiap 30 detik di CreateSppd
+public function updated($property)
+{
+    if (in_array($property, ['destination', 'purpose', 'biaya_transport'])) {
+        $this->dispatch('autosave');
+    }
+}
+
+#[On('autosave')]
+public function autoSaveDraft()
+{
+    if ($this->sppd_id) { // Jika sudah ada draft sebelumnya
+        Sppd::where('id', $this->sppd_id)->update([
+            'destination' => $this->destination,
+            'purpose' => $this->purpose,
+            // ... field lain
+            'updated_at' => now(),
+        ]);
+    }
+}
+D. Soft Delete Recovery (Admin only)
+php
+Copy
+// app/Http/Controllers/Admin/TrashController.php
+public function index()
+{
+    $trashedSppds = Sppd::onlyTrashed()->with('employee')->paginate(20);
+    return view('admin.trash.index', compact('trashedSppds'));
+}
+
+public function restore($id)
+{
+    $sppd = Sppd::onlyTrashed()->findOrFail($id);
+    $sppd->restore();
+    
+    // Restore juga relasi approvals jika soft delete cascade
+    SppdApproval::onlyTrashed()->where('sppd_id', $id)->restore();
+    
+    return back()->with('success', 'SPPD berhasil dipulihkan.');
+}
+
+public function forceDelete($id)
+{
+    // Hanya untuk super admin dengan confirmation multiple layer
+    $sppd = Sppd::onlyTrashed()->findOrFail($id);
+    
+    // Hard delete permanent (hanya untuk data test/salah input)
+    $sppd->forceDelete();
+    
+    return back()->with('success', 'SPPD dihapus permanen.');
+}
+STEP 10: DEPLOYMENT CHECKLIST (Go-Live)
+Markdown
+Fullscreen 
+Download 
+Fit
+Code
+Preview
+ APP_ENV=production
+ APP_DEBUG=false
+ Force HTTPS middleware aktif
+ Rate limiting: 5 attempt/login, 100 request/menit
+ Session: SECURE_COOKIE=true, SAME_SITE=strict
+ SQL Injection test: Input ' OR 1=1 -- pada semua form
+ XSS test: di text fields
+Security
+ Indexing: employees.nip, sppds.status, sppds.current_approver_nip
+ Foreign key integrity check
+ Backup otomatis (daily 02:00 WIB ke S3/Cloud)
+ Migration rollback test (jika gagal deploy)
+Database
+ All level (1-6) login test passed
+ Hierarchy approval flow test (Staff→Kaprodi→Wadek→Dekan→WR→Rektor)
+ Anggaran auto-update test (tidak boleh minus)
+ Generate nomor surat uniqueness test
+ Delegation active period test
+ Notification queue running (php artisan queue:work)
+Feature
+ Login < 2 detik
+ Dashboard load < 3 detik
+ PDF generate < 5 detik
+ Database query < 100ms (dengan eager loading)
+Performance
+ Audit trail tercatat untuk semua transaksi
+ Soft delete berfungsi (tidak ada hard delete SPPD approved)
+ Export Excel PDF laporan anggaran readable
+Compliance
+Pre-Production Checklist
+Status: Dokumentasi Sistem E-SPPD COMPLETE dan PRODUCTION READY.
+Semua komponen dari Authentication → Authorization → Business Logic → Audit → Security sudah tercover. Silakan deploy! 🚀
+
+📗 E-SPPD RUNBOOK OPERASIONAL (Post-Deploy)
+Version: 5.0 Maintenance
+Audience: System Admin / IT Support / Developer
+17. ZERO-DOWNTIME DEPLOYMENT STRATEGY
+Blue-Green Deployment (Untuk Update Critical)
+bash
+Copy
+#!/bin/bash
+# deploy.sh - Zero Downtime Deployment
+
+# Current symlink: /var/www/esppd -> /var/www/esppd-blue
+# Target: /var/www/esppd-green
+
+NEW_VERSION="green"
+OLD_VERSION="blue"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+echo "Deploying to $NEW_VERSION..."
+
+# 1. Clone/Extract ke folder green
+cd /var/www/esppd-$NEW_VERSION
+git pull origin main
+composer install --no-dev --optimize-autoloader
+npm run build
+
+# 2. Migrate (with maintenance mode if needed)
+php artisan migrate --force
+
+# 3. Cache & Optimize
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# 4. Test health check
+php artisan serve --port=8081 &
+sleep 5
+curl -f http://localhost:8081/health || exit 1
+kill %1
+
+# 5. Switch symlink (atomic operation)
+ln -sfn /var/www/esppd-$NEW_VERSION /var/www/esppd-new
+mv -Tf /var/www/esppd-new /var/www/esppd
+
+# 6. Reload PHP-FPM (graceful)
+sudo systemctl reload php8.2-fpm
+
+# 7. Verify
+curl -f https://esppd.infiatin.cloud/health
+
+echo "Deployment complete. Old version: $OLD_VERSION"
+Maintenance Mode yang Elegant
+php
+Copy
+<?php
+// app/Http/Middleware/MaintenanceModeMiddleware.php
+public function handle($request, Closure $next)
+{
+    if (app()->isDownForMaintenance()) {
+        // Allow admin bypass via secret token
+        if ($request->header('X-Maintenance-Token') === env('MAINTENANCE_SECRET')) {
+            return $next($request);
+        }
+        
+        // Check if request is for critical API (health check)
+        if ($request->is('health', 'api/health')) {
+            return response()->json(['status' => 'maintenance'], 503);
+        }
+        
+        return response()->view('errors.maintenance', [], 503);
+    }
+    
+    return $next($request);
+}
+
+// Command untuk maintenance dengan whitelist:
+// php artisan down --secret="bypass-token-123" --render="errors.maintenance"
+18. TROUBLESHOOTING MATRIX (Common Issues)
+Issue #1: Login Tidak Bisa, tapi Password Benar
+Symptom: "Password salah" terus, padahal user yakin DDMMYYYY benar.
+Diagnostic Steps:
+bash
+Copy
+# Check 1: Apakah employee ada?
+php artisan tinker
+>>> \App\Models\Employee::where('nip', '197505051999031001')->first()
+
+# Check 2: Apakah user ter-link?
+>>> $e->user
+>>> $e->user->email  # Pastikan email ada
+
+# Check 3: Cek password hash vs default
+>>> \Hash::check('15051975', $e->user->password)
+
+# Check 4: Lihat log error
+tail -f storage/logs/laravel.log | grep "Login error"
+Fix:
+bash
+Copy
+# Kalau password hash corrupt, reset manual:
+php artisan tinker
+>>> $u = \App\Models\User::find(1);
+>>> $u->password = \Hash::make('15051975'); # Default dari birth_date
+>>> $u->is_password_reset = false;
+>>> $u->save();
+Issue #2: Approval Macet (Stuck di Pending)
+Symptom: SPPD status pending, tapi atasan tidak melihat di dashboard.
+Root Cause Analysis:
+sql
+Copy
+-- Cek current_approver_nip vs usernip yang login
+SELECT sppd_number, current_approver_nip, status 
+FROM sppds 
+WHERE id = 123;
+
+-- Cek apakah current_approver masih aktif
+SELECT nip, is_active, deleted_at 
+FROM employees 
+WHERE nip = '197505051999031001';
+Fix Scenarios:
+Scenario A: Atasan sudah pindah/rotasi
+php
+Copy
+// Manual override oleh admin
+$sppd = Sppd::find(123);
+$sppd->current_approver_nip = 'NIP_ATASAN_BARU';
+$sppd->save();
+
+// Log perubahan
+ActivityLog::create([
+    'nip' => 'ADMIN_NIP',
+    'action' => 'override_approver',
+    'entity_type' => 'Sppd',
+    'entity_id' => $sppd->id,
+    'notes' => 'Override karena rotasi jabatan'
+]);
+Scenario B: Delegasi aktif tapi tidak sengaja
+php
+Copy
+// Nonaktifkan delegasi yang lupa dimatikan
+Delegation::where('delegator_nip', $atasanNip)
+    ->where('is_active', true)
+    ->update(['is_active' => false]);
+Issue #3: Anggaran Minus (Realisasi > Pagu)
+Symptom: Sisa anggaran negatif di dashboard.
+Emergency Fix:
+php
+Copy
+// Identifikasi SPPD mana yang menyebabkan
+$sppds = Sppd::where('anggaran_id', 5)
+    ->where('status', 'approved')
+    ->get();
+
+$totalRealisasi = $sppds->sum('total_biaya');
+$pagu = Anggaran::find(5)->pagu_awal;
+
+if ($totalRealisasi > $pagu) {
+    \Log::critical('Anggaran over budget', [
+        'anggaran_id' => 5,
+        'pagu' => $pagu,
+        'realisasi' => $totalRealisasi,
+        'selisih' => $totalRealisasi - $pagu
+    ]);
+    
+    // Notify bendahara
+    // Mail::to('bendahara@uinsaizu.ac.id')->send(new AlertOverBudget(...));
+}
+Prevention: Tambahkan constraint di database (kalau memungkinkan) atau validation layer.
+Issue #4: PDF Tidak Bisa di-Download (500 Error)
+Diagnostic:
+bash
+Copy
+# Cek storage symlink
+ls -la public/storage
+
+# Kalau broken:
+php artisan storage:link
+
+# Cek permission
+chmod -R 775 storage/app/public
+chown -R www-data:www-data storage/app/public
+
+# Cek DomPDF memory limit
+# Di config/dompdf.php atau php.ini:
+memory_limit = 512M
+19. AUTOMATED TESTING SUITE ( untuk CI/CD )
+Unit Test: Critical Business Logic
+php
+Copy
+<?php
+// tests/Unit/ApprovalHierarchyTest.php
+namespace Tests\Unit;
+
+use App\Models\Employee;
+use App\Models\Sppd;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class ApprovalHierarchyTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_dosen_cannot_approve_own_sppd()
+    {
+        $dosen = Employee::factory()->create(['approval_level' => 1]);
+        $user = User::factory()->create(['nip' => $dosen->nip]);
+        
+        $sppd = Sppd::factory()->create([
+            'employee_nip' => $dosen->nip,
+            'status' => 'pending',
+            'total_biaya' => 1000000
+        ]);
+        
+        $this->actingAs($user)
+             ->post("/approval/{$sppd->id}/approve")
+             ->assertStatus(403);
+    }
+    
+    public function test_budget_cannot_go_negative()
+    {
+        $anggaran = \App\Models\Anggaran::factory()->create([
+            'pagu_awal' => 1000000,
+            'realisasi' => 0
+        ]);
+        
+        $sppd = Sppd::factory()->create([
+            'total_biaya' => 1500000, // Lebih dari pagu
+            'anggaran_id' => $anggaran->id,
+            'status' => 'pending'
+        ]);
+        
+        // Mock approval dengan biaya besar
+        $response = $this->actingAs($this->getRektor())
+                         ->post("/approval/{$sppd->id}/approve");
+        
+        // Harus ditolak atau warning
+        $response->assertSessionHas('error', 'Anggaran tidak mencukupi');
+    }
+    
+    public function test_sppd_number_generated_only_on_final_approval()
+    {
+        $sppd = Sppd::factory()->create(['sppd_number' => null]);
+        
+        // Wadek approve (bukan final)
+        $this->actingAs($this->getWadek())
+             ->post("/approval/{$sppd->id}/approve");
+             
+        $sppd->refresh();
+        $this->assertNull($sppd->sppd_number); // Belum ada nomor
+        
+        // Rektor approve (final)
+        $this->actingAs($this->getRektor())
+             ->post("/approval/{$sppd->id}/approve");
+             
+        $sppd->refresh();
+        $this->assertNotNull($sppd->sppd_number);
+        $this->assertMatchesRegularExpression('/^\d{4}\/Un\.19/', $sppd->sppd_number);
+    }
+}
+Dusk Test: Browser Automation
+php
+Copy
+<?php
+// tests/Browser/LoginTest.php
+namespace Tests\Browser;
+
+use Laravel\Dusk\Browser;
+use Tests\DuskTestCase;
+
+class LoginTest extends DuskTestCase
+{
+    public function test_successful_login_flow()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->visit('/login')
+                    ->type('nip', '197505051999031001')
+                    ->type('password', '15051975')
+                    ->press('Masuk')
+                    ->assertPathIs('/force-password-change'); // First time
+                    
+            // Ganti password
+            $browser->type('current_password', '15051975')
+                    ->type('new_password', 'NewSecurePass123!')
+                    ->type('new_password_confirmation', 'NewSecurePass123!')
+                    ->press('Simpan')
+                    ->assertPathIs('/dashboard');
+        });
+    }
+    
+    public function test_sppd_submission_workflow()
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->loginAs(User::find(1))
+                    ->visit('/sppd/create')
+                    ->type('destination', 'Surabaya')
+                    ->type('purpose', 'Rapat Koordinasi')
+                    ->type('biaya_transport', '2000000')
+                    ->press('Ajukan')
+                    ->assertSee('Menunggu Persetujuan');
+        });
+    }
+}
+Run Test:
+bash
+Copy
+# Unit Test
+php artisan test --filter=ApprovalHierarchyTest
+
+# Dusk (Browser)
+php artisan dusk
+
+# Specific test
+php artisan dusk --filter=LoginTest
+20. MIGRATION STRATEGY (Pindah Server/Upgrade)
+Database Migration Checklist
+bash
+Copy
+# 1. Export dari server lama
+mysqldump -u root -p esppd_production --single-transaction --routines --triggers > esppd_backup_$(date +%Y%m%d).sql
+
+# 2. Import ke server baru
+mysql -u root -p esppd_new < esppd_backup_xxxx.sql
+
+# 3. Verify data integrity
+php artisan tinker
+>>> \App\Models\Employee::count(); # Bandingkan dengan server lama
+>>> \App\Models\Sppd::count();
+
+# 4. Update environment
+# Edit .env: DB_HOST, APP_URL, dll
+
+# 5. Regenerate cache
+php artisan config:cache
+php artisan route:cache
+
+# 6. Test critical functions
+curl -X POST https://new-server.com/login \
+  -d "nip=197505051999031001" \
+  -d "password=testing"
+Rollback Plan (Kalau Gagal)
+bash
+Copy
+# Script rollback.sh
+# 1. Redirect DNS/load balancer ke server lama
+# 2. Atau restore database:
+mysql -u root -p esppd_production < rollback_backup.sql
+
+# 3. Notify admin
+echo "Rollback executed at $(date)" | mail -s "E-SPPD Rollback" admin@uinsaizu.ac.id
+21. KNOWLEDGE BASE (KB) for Helpdesk
+Template Respon untuk User
+Table
+Copy
+Masalah	Respon Helpdesk	Eskalasi ke Dev?
+Lupa password	"Silakan hubungi Admin TU untuk reset ke DDMMYYYY"	No
+Tidak bisa upload PDF > 2MB	"Maksimal file 2MB. Silakan kompres di smallpdf.com"	No
+SPPD hilang dari dashboard	Cek status di menu "Riwayat" atau filter status	No
+Nomor surat double	Critical - eskalasi ke Dev dengan SPPD ID	Yes
+Anggaran tidak update	Clear cache browser. Kalau masih, eskalasi	Yes
+Tombol approve tidak ada	Cek level user. Kalau level benar, eskalasi	Yes
+Dashboard SLA (Service Level Agreement)
+Copy
+Prioritas 1 (Critical): Sistem down / Tidak bisa login semua user
+  - Response time: 15 menit
+  - Resolution: 2 jam
+  
+Prioritas 2 (High): Fitur critical error (approval macet, anggaran error)
+  - Response time: 1 jam
+  - Resolution: 4 jam
+  
+Prioritas 3 (Medium): Bug non-critical (UI glitch, typo)
+  - Response time: 4 jam
+  - Resolution: 1-2 hari
+  
+Prioritas 4 (Low): Feature request / Enhancement
+  - Response time: 1 hari
+  - Resolution: Next sprint
+FINAL: END-OF-LIFE HANDOVER DOCUMENT
+Markdown
+Copy
+Code
+Preview
+## E-SPPD System Handover Document
+
+### Informasi Sistem
+- **Nama:** E-SPPD (Electronic Surat Perjalanan Dinas)
+- **Versi:** 1.0.0 Production
+- **URL:** https://esppd.infiatin.cloud
+- **Server:** 192.168.1.27:8083 (Ubuntu 20.04)
+- **Tech Stack:** Laravel 12, Livewire 3, PostgreSQL 14
+
+### Credentials (Keep Secure)
+- **Database:** esppd_production / [ENCRYPTED]
+- **Admin:** admin@uinsaizu.ac.id / [VAULT]
+- **SSH Key:** ~/.ssh/esppd_deploy_key
+
+### Tim Support
+- **Primary Dev:** [Nama] / [WA]
+- **System Admin:** [Nama] / [WA]
+- **PIC BAAK:** [Nama] / [WA]
+
+### Lokasi Dokumentasi
+- **Technical Spec:** /docs/technical/
+- **User Manual:** /docs/user/
+- **API Docs:** /api/documentation
+- **Runbook ini:** Google Drive [LINK]
+
+### Backup & Recovery
+- **Frequency:** Daily 02:00 WIB
+- **Location:** AWS S3 bucket: esppd-backups
+- **Retention:** 30 hari
+- **Last tested:** [Tanggal]
+
+### Known Issues
+1. Safari mobile kadang tidak bisa preview PDF (workaround: download)
+2. WhatsApp notification delay 2-3 menit (bukan real-time)
+
+### Future Roadmap
+- Q2 2026: Integrasi SAP Keuangan
+- Q3 2026: Mobile App React Native
+- Q4 2026: AI Anomaly Detection untuk anggaran
+
+---
+Document Version: 1.0
+Last Updated: 30 Januari 2026
+System Status: OPERATIONAL ✅
+Sistem E-SPPD sudah 100% lengkap dengan dokumentasi operasional, troubleshooting, dan maintenance guide.

@@ -143,6 +143,3 @@
     </div>
 </div>
 @endsection
-                        <!-- Password -->
-
-                        <div class="space-y-2">
