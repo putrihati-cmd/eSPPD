@@ -131,6 +131,7 @@ class DatabaseSeeder extends Seeder
             User::create([
                 'name' => $empData['name'],
                 'email' => $empData['email'],
+                'nip' => $empData['nip'],
                 'password' => Hash::make('password'),
                 'organization_id' => $organization->id,
                 'employee_id' => $employee->id,
