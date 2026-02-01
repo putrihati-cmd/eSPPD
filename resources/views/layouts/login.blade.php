@@ -3,15 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login e-SPPD</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>Login e-SPPD | UIN SAIZU</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;300;400;700;900&display=swap" rel="stylesheet">
     <link href="/css/app.css" rel="stylesheet">
     <style>
-        body { min-height: 100vh; background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); font-family: 'Inter', sans-serif; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            min-height: 100vh; 
+            background: #0a0f0d; 
+            font-family: 'Outfit', sans-serif; 
+            overflow-x: hidden;
+        }
     </style>
     @livewireStyles
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body>
     {{ $slot ?? '' }}
     @yield('content')
     @livewireScripts
