@@ -167,7 +167,7 @@ Other test users:
 
 1. **Deploy to Production**: Pull latest code on 192.168.1.27
    ```bash
-   ssh root@192.168.1.27 'cd /var/www/eSPPD && git pull origin main'
+   ssh tholib_server@192.168.1.27 'cd /var/www/eSPPD && git pull origin main'
    ```
 
 2. **Test Login**: Try login with test credentials above

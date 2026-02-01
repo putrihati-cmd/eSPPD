@@ -63,11 +63,17 @@ Changes pushed to GitHub with commits:
 - `902436a` - Add NIP field to user creation in database seeder
 
 ### On Production Server
-After deploying these changes, you may need to:
-1. Run `git pull origin main` to get latest code
-2. Optionally run `php artisan migrate` if fresh installation
-3. Optionally run `php artisan db:seed` if you need test users
-4. Clear Laravel cache: `php artisan cache:clear` (optional)
+After deploying these changes via SSH:
+```bash
+ssh tholib_server@192.168.1.27
+cd /var/www/eSPPD
+git pull origin main
+```
+
+Optional maintenance commands:
+1. `php artisan migrate` - if fresh installation
+2. `php artisan db:seed` - if you need test users
+3. `php artisan cache:clear` - to clear cache
 
 ## Troubleshooting
 

@@ -103,7 +103,7 @@ User::create([
 
 #### Option 2: Manual Deployment via SSH
 ```bash
-ssh root@192.168.1.27
+ssh tholib_server@192.168.1.27
 
 cd /var/www/eSPPD
 git pull origin main
@@ -117,10 +117,10 @@ php artisan cache:clear  # Optional but recommended
 #### Option 3: SCP File Transfer
 ```bash
 scp resources/views/livewire/pages/auth/login.blade.php \
-    root@192.168.1.27:/var/www/eSPPD/resources/views/livewire/pages/auth/
+    tholib_server@192.168.1.27:/var/www/eSPPD/resources/views/livewire/pages/auth/
 
 scp database/seeders/DatabaseSeeder.php \
-    root@192.168.1.27:/var/www/eSPPD/database/seeders/
+    tholib_server@192.168.1.27:/var/www/eSPPD/database/seeders/
 ```
 
 ---
