@@ -66,7 +66,7 @@ Changes pushed to GitHub with commits:
 After deploying these changes via SSH:
 ```bash
 ssh tholib_server@192.168.1.27
-cd /var/www/eSPPD
+cd /var/www/esppd
 git pull origin main
 ```
 
