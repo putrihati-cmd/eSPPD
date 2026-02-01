@@ -26,7 +26,11 @@ new #[Layout('layouts.guest')] class extends Component {
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt(['nip' => $this->nip, 'password' => $this->password], $this->remember)) {
+        // Convert NIP to email format for authentication
+        // If NIP is provided, append @uinsaizu.ac.id domain
+        $emailToAuth = $this->nip . '@uinsaizu.ac.id';
+
+        if (!Auth::attempt(['email' => $emailToAuth, 'password' => $this->password], $this->remember)) {
             $this->isLoading = false;
             throw ValidationException::withMessages([
                 'nip' => 'NIP atau password salah.',
