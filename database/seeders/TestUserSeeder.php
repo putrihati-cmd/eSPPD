@@ -55,67 +55,83 @@ class TestUserSeeder extends Seeder
             [
                 'name' => 'Admin User',
                 'email' => 'admin@esppd.test',
-                'password' => 'password123',
+                'nip' => '198501051989031001',
+                'birth_date' => '1985-01-05',
                 'role' => 'admin',
                 'role_id' => $adminRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false, // Must change password on first login
             ],
             [
                 'name' => 'Rektor Uin',
                 'email' => 'rektor@esppd.test',
-                'password' => 'password123',
+                'nip' => '195508151985031005',
+                'birth_date' => '1955-08-15',
                 'role' => 'rektor',
                 'role_id' => $rektorRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
             [
                 'name' => 'Wakil Rektor',
                 'email' => 'warek@esppd.test',
-                'password' => 'password123',
+                'nip' => '196003201992031002',
+                'birth_date' => '1960-03-20',
                 'role' => 'warek',
                 'role_id' => $warekRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
             [
                 'name' => 'Dekan Fakultas',
                 'email' => 'dekan@esppd.test',
-                'password' => 'password123',
+                'nip' => '197505051999031001',
+                'birth_date' => '1975-05-05',
                 'role' => 'dekan',
                 'role_id' => $dekanRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
             [
                 'name' => 'Wakil Dekan',
                 'email' => 'wadek@esppd.test',
-                'password' => 'password123',
+                'nip' => '198602101998021001',
+                'birth_date' => '1986-02-10',
                 'role' => 'wadek',
                 'role_id' => $wadekRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
             [
                 'name' => 'Kaprodi Program',
                 'email' => 'kaprodi@esppd.test',
-                'password' => 'password123',
+                'nip' => '198711151999032001',
+                'birth_date' => '1987-11-15',
                 'role' => 'kaprodi',
                 'role_id' => $kaprodiRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
             [
                 'name' => 'Dosen Biasa',
                 'email' => 'dosen@esppd.test',
-                'password' => 'password123',
+                'nip' => '198003152020122002',
+                'birth_date' => '1980-03-15',
                 'role' => 'employee',
                 'role_id' => $employeeRole->id,
-                'is_password_reset' => true,
+                'is_password_reset' => false,
             ],
         ];
 
         foreach ($testUsers as $userData) {
+            // Extract data
+            $nip = $userData['nip'];
+            $birthDate = $userData['birth_date'];
+            $email = $userData['email'];
+
+            // Generate password: DDMMYYYY dari birth_date
+            $passwordDefault = \Carbon\Carbon::createFromFormat('Y-m-d', $birthDate)->format('dmY');
+
             User::updateOrCreate(
-                ['email' => $userData['email']],
+                ['email' => $email],
                 [
                     'name' => $userData['name'],
-                    'password' => Hash::make($userData['password']),
+                    'nip' => $nip,
+                    'password' => Hash::make($passwordDefault),
                     'role' => $userData['role'],
                     'role_id' => $userData['role_id'],
                     'email_verified_at' => now(),

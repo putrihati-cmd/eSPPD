@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         // Seed new RBAC roles first
         $this->call([
             RoleSeeder::class,
+            TestUserSeeder::class,
         ]);
 
         // Create Organization
@@ -64,6 +65,7 @@ class DatabaseSeeder extends Seeder
                 'nip' => '198302082015031501',
                 'name' => 'Mawi Khusni Albar',
                 'email' => 'mawikhusni@uinsaizu.ac.id',
+                'birth_date' => '1983-02-08',
                 'position' => 'Lektor Kepala',
                 'rank' => 'Pembina',
                 'grade' => 'IV/a',
@@ -75,6 +77,7 @@ class DatabaseSeeder extends Seeder
                 'nip' => '197505152006041001',
                 'name' => 'Ansori',
                 'email' => 'ansori@uinsaizu.ac.id',
+                'birth_date' => '1975-05-15',
                 'position' => 'Dekan',
                 'rank' => 'Pembina Utama Muda',
                 'grade' => 'IV/c',
@@ -86,6 +89,7 @@ class DatabaseSeeder extends Seeder
                 'nip' => '198811202019031001',
                 'name' => 'Ahmad Fauzi',
                 'email' => 'ahmadfauzi@uinsaizu.ac.id',
+                'birth_date' => '1988-11-20',
                 'position' => 'Lektor',
                 'rank' => 'Penata Tk.I',
                 'grade' => 'III/d',
@@ -96,6 +100,7 @@ class DatabaseSeeder extends Seeder
                 'nip' => '199003152020122001',
                 'name' => 'Siti Nurhaliza',
                 'email' => 'sitinurhaliza@uinsaizu.ac.id',
+                'birth_date' => '1990-03-15',
                 'position' => 'Asisten Ahli',
                 'rank' => 'Penata Muda Tk.I',
                 'grade' => 'III/b',
@@ -106,6 +111,7 @@ class DatabaseSeeder extends Seeder
                 'nip' => '199505012022011001',
                 'name' => 'Budi Santoso',
                 'email' => 'budisantoso@uinsaizu.ac.id',
+                'birth_date' => '1995-05-01',
                 'position' => 'Tenaga Kependidikan',
                 'rank' => 'Pengatur',
                 'grade' => 'II/c',
@@ -117,6 +123,7 @@ class DatabaseSeeder extends Seeder
         foreach ($employees as $empData) {
             $isAdmin = $empData['is_admin'] ?? false;
             $isApprover = $empData['is_approver'] ?? false;
+            $birthDate = $empData['birth_date'];
             unset($empData['is_admin'], $empData['is_approver']);
 
             $employee = Employee::create([
@@ -124,19 +131,23 @@ class DatabaseSeeder extends Seeder
                 'organization_id' => $organization->id,
             ]);
 
+            // Generate password: DDMMYYYY from birth_date
+            $passwordDefault = \Carbon\Carbon::createFromFormat('Y-m-d', $birthDate)->format('dmY');
+
             // Create user for this employee
             $roleName = $isAdmin ? 'admin' : ($isApprover ? 'dekan' : 'dosen');
             $roleModel = \App\Models\Role::where('name', $roleName)->first();
-            
+
             User::create([
                 'name' => $empData['name'],
                 'email' => $empData['email'],
                 'nip' => $empData['nip'],
-                'password' => Hash::make('password'),
+                'password' => Hash::make($passwordDefault),
                 'organization_id' => $organization->id,
                 'employee_id' => $employee->id,
                 'role' => $roleName,
                 'role_id' => $roleModel?->id,
+                'is_password_reset' => false,
             ]);
 
             // Set head of unit for approver
@@ -265,7 +276,7 @@ class DatabaseSeeder extends Seeder
         $sptCounter = 2470;
         foreach ($sampleSpds as $spdData) {
             $duration = (new \DateTime($spdData['departure_date']))->diff(new \DateTime($spdData['return_date']))->days + 1;
-            
+
             $spd = Spd::create([
                 'organization_id' => $organization->id,
                 'unit_id' => $firstEmployee->unit_id,

@@ -39,6 +39,14 @@ new #[Layout('layouts.guest')] class extends Component {
 
         Session::regenerate();
 
+        // Check if user must change password on first login
+        $user = Auth::user();
+        if ($user && !$user->is_password_reset) {
+            // Flag false = must change password
+            $this->redirect(route('auth.force-change-password', absolute: false), navigate: true);
+            return;
+        }
+
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 
