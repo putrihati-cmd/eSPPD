@@ -338,7 +338,7 @@ new #[Layout('layouts.guest')] class extends Component {
                                         class="text-sm font-bold text-brand-teal hover:underline decoration-2 underline-offset-4">Lupa
                                         password?</a>
                                 @endif
-                                <a href="#bantuan" class="text-xs text-gray-400 hover:text-brand-lime font-medium underline underline-offset-2">Butuh bantuan login?</a>
+                                <a href="https://wa.me/6281234567890?text=Halo%20Admin%20IT%2C%20saya%20butuh%20bantuan%20login%20eSPPD" target="_blank" rel="noopener" class="text-xs text-gray-400 hover:text-brand-lime font-medium underline underline-offset-2">Butuh bantuan login?</a>
                             </div>
                         </div>
 
@@ -367,8 +367,7 @@ new #[Layout('layouts.guest')] class extends Component {
                 </div>
 
                 <div class="text-center mt-10">
-                    <p class="text-white/60 text-sm font-medium">Bantuan? <a href="#"
-                            class="text-brand-lime font-bold hover:underline">Hubungi Admin IT</a></p>
+                    <p class="text-white/60 text-sm font-medium">Bantuan? <a href="mailto:support@uinsaizu.ac.id?subject=Bantuan%20Login%20eSPPD" class="text-brand-lime font-bold hover:underline">Hubungi Admin IT</a></p>
                 </div>
             </div>
         </div>
