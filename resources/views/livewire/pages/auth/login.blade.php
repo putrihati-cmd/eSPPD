@@ -1,4 +1,7 @@
-<!-- Logic class anonymous dihapus, hanya markup Blade/HTML -->
+
+@extends('layouts.login')
+
+<!-- Halaman login ini menggunakan layout khusus tanpa sidebar/dashboard. -->
 
 <div>
     <style>
