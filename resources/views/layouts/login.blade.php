@@ -12,7 +12,7 @@
     @livewireStyles
 </head>
 <body class="flex items-center justify-center min-h-screen bg-brand-teal">
-    {{ $slot }}
+    @yield('content')
     @livewireScripts
 </body>
 </html>
